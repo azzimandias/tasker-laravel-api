@@ -13,7 +13,10 @@ return new class extends Migration
     {
         Schema::create('personal_lists', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('color');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
