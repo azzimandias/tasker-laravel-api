@@ -11,4 +11,5 @@ class Personal_list extends Model
     use HasFactory;
     use SoftDeletes;
     protected $table = 'personal_lists';
+    protected $guarded = false;
 }

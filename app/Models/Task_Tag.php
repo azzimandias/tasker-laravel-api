@@ -11,4 +11,5 @@ class Task_Tag extends Model
     use HasFactory;
     use SoftDeletes;
     protected $table = 'task__tags';
+    protected $guarded = false;
 }

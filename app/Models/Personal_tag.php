@@ -11,4 +11,5 @@ class Personal_tag extends Model
     use HasFactory;
     use SoftDeletes;
     protected $table = 'personal_tags';
+    protected $guarded = false;
 }
