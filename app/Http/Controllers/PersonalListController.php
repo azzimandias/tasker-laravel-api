@@ -26,6 +26,8 @@ class PersonalListController extends Controller
         }
     }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     public function sortLists() : string {
         header('Access-Control-Allow-Origin: *');
         $result = $this->updateSortCountOfActiveTasks();
@@ -51,5 +53,32 @@ class PersonalListController extends Controller
                 'count' => count(Task::all())
             ],
         ];
+    }
+
+    public function sortListToday() : string {
+        header('Access-Control-Allow-Origin: *');
+        return json_encode(Task::where('deadline', date('Y-m-d'))->get());
+    }
+    public function sortListWithFlag() : string {
+        header('Access-Control-Allow-Origin: *');
+        return json_encode(Task::where('is_flagged', 1)->get());
+    }
+    public function sortListDone() : string {
+        header('Access-Control-Allow-Origin: *');
+        return json_encode(Task::where('is_done', 1)->get());
+    }
+    public function sortListAll() : string {
+        header('Access-Control-Allow-Origin: *');
+        return json_encode(Task::all());
+    }
+    public function personalListTasks() : array {
+        header('Access-Control-Allow-Origin: *');
+        if(isset($_GET['id'])) {
+            $response = Personal_list::find($_GET['id']);
+            $listName = $response['name'];
+            $response = Task::where('id_list', $_GET['id'])->get();
+            return [$listName, $response];
+        }
+        return [];
     }
 }
