@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->date('deadline')->nullable();
             $table->string('url')->nullable();
             $table->unsignedInteger('priority')->nullable();
             $table->boolean('is_flagged')->default(0);

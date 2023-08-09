@@ -49,8 +49,9 @@ class DevController extends Controller
 
         $devTasks = [
             [
-                'name' => 'Dev "Tasker" app',
+                'name' => 'Разработать "Tasker-app"',
                 'description' => 'This is front-end app',
+                'deadline' => date('Y-m-d'),
                 'priority' => null,
                 'url' => 'https://github.com/azzimandias/tasker',
                 'is_flagged' => 0,
@@ -58,8 +59,9 @@ class DevController extends Controller
                 'id_list' => 1,
             ],
             [
-                'name' => 'Dev "Tasker" api',
+                'name' => 'Разработать "Tasker-api"',
                 'description' => 'This is back-end api for "Tasker" app',
+                'deadline' => null,
                 'priority' => null,
                 'url' => 'https://github.com/azzimandias/tasker-laravel-api',
                 'is_flagged' => 1,
@@ -67,8 +69,9 @@ class DevController extends Controller
                 'id_list' => 2,
             ],
             [
-                'name' => 'Dev "Tasker" app',
+                'name' => 'Разработать "Tasker-app"',
                 'description' => 'This is front-end app',
+                'deadline' => date('Y-m-d'),
                 'priority' => null,
                 'url' => 'https://github.com/azzimandias/tasker',
                 'is_flagged' => 0,
@@ -76,8 +79,9 @@ class DevController extends Controller
                 'id_list' => 2,
             ],
             [
-                'name' => 'Dev "Tasker" api',
+                'name' => 'Разработать "Tasker-api"',
                 'description' => 'This is back-end api for "Tasker" app',
+                'deadline' => null,
                 'priority' => null,
                 'url' => 'https://github.com/azzimandias/tasker-laravel-api',
                 'is_flagged' => 1,
@@ -85,8 +89,9 @@ class DevController extends Controller
                 'id_list' => 4,
             ],
             [
-                'name' => 'Dev "Tasker" app',
+                'name' => 'Разработать "Tasker-app"',
                 'description' => 'This is front-end app',
+                'deadline' => date('Y-m-d'),
                 'priority' => null,
                 'url' => 'https://github.com/azzimandias/tasker',
                 'is_flagged' => 1,
@@ -94,8 +99,9 @@ class DevController extends Controller
                 'id_list' => 1,
             ],
             [
-                'name' => 'Dev "Tasker" api',
+                'name' => 'Разработать "Tasker-api"',
                 'description' => 'This is back-end api for "Tasker" app',
+                'deadline' => null,
                 'priority' => null,
                 'url' => 'https://github.com/azzimandias/tasker-laravel-api',
                 'is_flagged' => 1,
@@ -107,6 +113,7 @@ class DevController extends Controller
             Task::create([
                 'name' => $task['name'],
                 'description' => $task['description'],
+                'deadline' => $task['deadline'],
                 'priority' => $task['priority'],
                 'url' => $task['url'],
                 'is_flagged' => $task['is_flagged'],

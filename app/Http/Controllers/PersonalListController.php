@@ -36,7 +36,7 @@ class PersonalListController extends Controller
         return [
             [
                 'id' => 1,
-                'count' => 0 //count(Task::where('created_at', date('Y-m-d h:i:s'))->get()) // for test
+                'count' => count(Task::where('deadline', date('Y-m-d'))->get())
             ],
             [
                 'id' => 2,
