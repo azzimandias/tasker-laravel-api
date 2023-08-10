@@ -24,3 +24,4 @@ Route::get('/lists', [PersonalListController::class, 'lists']);
 Route::get('/sortLists', [PersonalListController::class, 'sortLists']);
 Route::get('/tags', [PersonalTagController::class, 'tags']);
 Route::get('/list', [PersonalListController::class, 'personalListTasks']);
+Route::get('/tag', [PersonalTagController::class, 'taggedTasks']);

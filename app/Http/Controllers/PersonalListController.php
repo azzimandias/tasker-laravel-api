@@ -55,33 +55,33 @@ class PersonalListController extends Controller
         ];
     }
 
-    public function sortListToday() : string {
+    public function sortListToday() : array {
         header('Access-Control-Allow-Origin: *');
-        return json_encode([
+        return [
             'Сегодня',
             Task::where('deadline', date('Y-m-d'))->get()
-        ]);
+        ];
     }
-    public function sortListWithFlag() : string {
+    public function sortListWithFlag() : array {
         header('Access-Control-Allow-Origin: *');
-        return json_encode([
+        return [
             'С флажком',
             Task::where('is_flagged', 1)->get()
-        ]);
+        ];
     }
-    public function sortListDone() : string {
+    public function sortListDone() : array {
         header('Access-Control-Allow-Origin: *');
-        return json_encode([
+        return [
             'Завершено',
             Task::where('is_done', 1)->get()
-        ]);
+        ];
     }
-    public function sortListAll() : string {
+    public function sortListAll() : array {
         header('Access-Control-Allow-Origin: *');
-        return json_encode([
+        return [
             'Все',
             Task::all()
-        ]);
+        ];
     }
     public function personalListTasks() : string {
         header('Access-Control-Allow-Origin: *');
@@ -90,7 +90,7 @@ class PersonalListController extends Controller
             $response = Personal_list::find($_GET['id']);
             $listName = $response['name'];
             $response = Task::where('id_list', $_GET['id'])->get();
-            $result = json_encode([$listName, $response]);
+            $result = [$listName, $response];
         } elseif (isset($_GET['name'])) {
             switch ($_GET['name']) {
                 case 'today':
@@ -107,6 +107,6 @@ class PersonalListController extends Controller
                     break;
             }
         }
-        return $result;
+        return json_encode($result);
     }
 }
