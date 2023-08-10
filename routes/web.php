@@ -23,8 +23,4 @@ Route::get('/tasks', [TaskController::class, 'tasks']);
 Route::get('/lists', [PersonalListController::class, 'lists']);
 Route::get('/sortLists', [PersonalListController::class, 'sortLists']);
 Route::get('/tags', [PersonalTagController::class, 'tags']);
-Route::get('/today', [PersonalListController::class, 'sortListToday']);
-Route::get('/with_flag', [PersonalListController::class, 'sortListWithFlag']);
-Route::get('/done', [PersonalListController::class, 'sortListDone']);
-Route::get('/all', [PersonalListController::class, 'sortListAll']);
 Route::get('/list', [PersonalListController::class, 'personalListTasks']);
