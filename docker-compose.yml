@@ -53,6 +53,7 @@ services:
                 - '-p${DB_PASSWORD}'
             retries: 3
             timeout: 5s
+        container_name: mysql
     redis:
         image: 'redis:alpine'
         ports:

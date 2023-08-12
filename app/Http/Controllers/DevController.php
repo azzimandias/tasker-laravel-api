@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use App\Models\Personal_list;
-use App\Models\Personal_tag;
-use App\Models\Task_Tag;
+use App\Models\Tag;
+use App\Models\Tag_Task;
 use JetBrains\PhpStorm\NoReturn;
 
 class DevController extends Controller
@@ -49,7 +49,7 @@ class DevController extends Controller
 
         $devTasks = [
             [
-                'name' => 'Разработать "Tasker-app"',
+                'name' => 'Задача 1',
                 'description' => 'This is front-end app',
                 'deadline' => date('Y-m-d'),
                 'priority' => null,
@@ -59,7 +59,7 @@ class DevController extends Controller
                 'id_list' => 1,
             ],
             [
-                'name' => 'Разработать "Tasker-api"',
+                'name' => 'Задача 2',
                 'description' => 'This is back-end api for "Tasker" app',
                 'deadline' => null,
                 'priority' => null,
@@ -69,7 +69,7 @@ class DevController extends Controller
                 'id_list' => 2,
             ],
             [
-                'name' => 'Разработать "Tasker-app"',
+                'name' => 'Задача 3',
                 'description' => 'This is front-end app',
                 'deadline' => date('Y-m-d'),
                 'priority' => null,
@@ -79,7 +79,7 @@ class DevController extends Controller
                 'id_list' => 2,
             ],
             [
-                'name' => 'Разработать "Tasker-api"',
+                'name' => 'Задача 4',
                 'description' => 'This is back-end api for "Tasker" app',
                 'deadline' => null,
                 'priority' => null,
@@ -89,7 +89,7 @@ class DevController extends Controller
                 'id_list' => 4,
             ],
             [
-                'name' => 'Разработать "Tasker-app"',
+                'name' => 'Задача 5',
                 'description' => 'This is front-end app',
                 'deadline' => date('Y-m-d'),
                 'priority' => null,
@@ -99,7 +99,7 @@ class DevController extends Controller
                 'id_list' => 1,
             ],
             [
-                'name' => 'Разработать "Tasker-api"',
+                'name' => 'Задача 6',
                 'description' => 'This is back-end api for "Tasker" app',
                 'deadline' => null,
                 'priority' => null,
@@ -109,7 +109,7 @@ class DevController extends Controller
                 'id_list' => 3,
             ],
             [
-                'name' => 'Разработать "Tasker-app"',
+                'name' => 'Задача 7',
                 'description' => 'This is front-end app',
                 'deadline' => date('Y-m-d'),
                 'priority' => null,
@@ -119,7 +119,7 @@ class DevController extends Controller
                 'id_list' => 1,
             ],
             [
-                'name' => 'Разработать "Tasker-api"',
+                'name' => 'Задача 8',
                 'description' => 'This is back-end api for "Tasker" app',
                 'deadline' => null,
                 'priority' => null,
@@ -129,7 +129,7 @@ class DevController extends Controller
                 'id_list' => 2,
             ],
             [
-                'name' => 'Разработать "Tasker-app"',
+                'name' => 'Задача 9',
                 'description' => 'This is front-end app',
                 'deadline' => date('Y-m-d'),
                 'priority' => null,
@@ -139,7 +139,7 @@ class DevController extends Controller
                 'id_list' => 2,
             ],
             [
-                'name' => 'Разработать "Tasker-api"',
+                'name' => 'Задача 10',
                 'description' => 'This is back-end api for "Tasker" app',
                 'deadline' => null,
                 'priority' => null,
@@ -149,7 +149,7 @@ class DevController extends Controller
                 'id_list' => 4,
             ],
             [
-                'name' => 'Разработать "Tasker-app"',
+                'name' => 'Задача 11',
                 'description' => 'This is front-end app',
                 'deadline' => date('Y-m-d'),
                 'priority' => null,
@@ -159,7 +159,7 @@ class DevController extends Controller
                 'id_list' => 1,
             ],
             [
-                'name' => 'Разработать "Tasker-api"',
+                'name' => 'Задача 12',
                 'description' => 'This is back-end api for "Tasker" app',
                 'deadline' => null,
                 'priority' => null,
@@ -203,7 +203,7 @@ class DevController extends Controller
             ],
         ];
         foreach ($devTags as $tag) {
-            Personal_tag::create([
+            Tag::create([
                 'name' => $tag['name'],
             ]);
         }
@@ -231,9 +231,9 @@ class DevController extends Controller
             ],
         ];
         foreach ($devTaskTags as $tasktag) {
-            Task_Tag::create([
-                'id_task' => $tasktag['id_task'],
-                'id_tag' => $tasktag['id_tag'],
+            Tag_Task::create([
+                'task_id' => $tasktag['id_task'],
+                'tag_id' => $tasktag['id_tag'],
             ]);
         }
         die();

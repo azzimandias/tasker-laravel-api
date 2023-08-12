@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Personal_tag extends Model
+class Tag_Task extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    protected $table = 'personal_tags';
+    protected $table = 'tag_task';
     protected $guarded = false;
 }
