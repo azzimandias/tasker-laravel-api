@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DevController;
-use App\Http\Controllers\TaskController;
 use App\Http\Controllers\PersonalListController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\TaskController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,11 +12,14 @@ use App\Http\Controllers\TagController;
 |--------------------------------------------------------------------------
 |
 | Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
 |
 */
 
+Route::get('/', function () {
+    return ['Laravel' => app()->version()];
+});
 Route::get('/', function () { return view('welcome'); });
 Route::get('/dev/create', [DevController::class, 'devCreate']);
 Route::get('/tasks', [TaskController::class, 'tasks']);
@@ -25,4 +28,6 @@ Route::get('/sortLists', [PersonalListController::class, 'sortLists']);
 Route::get('/tags', [TagController::class, 'tags']);
 Route::get('/list', [PersonalListController::class, 'personalListTasks']);
 Route::get('/tag', [TagController::class, 'taggedTasks']);
-Route::get('/updateTask', [TaskController::class, 'updateTask']);
+Route::post('/updateTask', [TaskController::class, 'updateTask']);
+
+require __DIR__.'/auth.php';

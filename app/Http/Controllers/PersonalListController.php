@@ -11,7 +11,6 @@ class PersonalListController extends Controller
 {
     public function lists() : string {
         $this->updatePersonalCountOfActiveTasks();
-        header('Access-Control-Allow-Origin: *');
         $response = Personal_list::all();
         return json_encode($response);
     }
@@ -29,7 +28,6 @@ class PersonalListController extends Controller
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public function sortLists() : string {
-        header('Access-Control-Allow-Origin: *');
         $result = $this->updateSortCountOfActiveTasks();
         return json_encode($result);
     }
@@ -56,35 +54,30 @@ class PersonalListController extends Controller
     }
 
     public function sortListToday() : array {
-        header('Access-Control-Allow-Origin: *');
         return [
             'Сегодня',
             Task::where('deadline', date('Y-m-d'))->get()
         ];
     }
     public function sortListWithFlag() : array {
-        header('Access-Control-Allow-Origin: *');
         return [
             'С флажком',
             Task::where('is_flagged', 1)->get()
         ];
     }
     public function sortListDone() : array {
-        header('Access-Control-Allow-Origin: *');
         return [
             'Завершено',
             Task::where('is_done', 1)->get()
         ];
     }
     public function sortListAll() : array {
-        header('Access-Control-Allow-Origin: *');
         return [
             'Все',
             Task::all()
         ];
     }
     public function personalListTasks() : string {
-        header('Access-Control-Allow-Origin: *');
         $result = '';
         if(isset($_GET['id'])) {
             $response = Personal_list::find($_GET['id']);

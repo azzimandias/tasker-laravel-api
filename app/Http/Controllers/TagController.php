@@ -10,13 +10,11 @@ use Illuminate\Http\Request;
 class TagController extends Controller
 {
     public function tags() : string {
-        header('Access-Control-Allow-Origin: *');
         $response = Tag::all();
         return json_encode($response);
     }
 
     public function taggedTasks() : string {
-        header('Access-Control-Allow-Origin: *');
         $idxs = null;
         $tasks = [];
         $result = [];

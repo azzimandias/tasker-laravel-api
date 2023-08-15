@@ -18,8 +18,8 @@ return new class extends Migration
             $table->date('deadline')->nullable();
             $table->string('url')->nullable();
             $table->unsignedInteger('priority')->nullable();
-            $table->boolean('is_flagged')->default(0);
-            $table->boolean('is_done')->default(0);
+            $table->boolean('is_flagged')->default(false);
+            $table->boolean('is_done')->default(false);
 
             $table->unsignedBigInteger('id_user')->nullable();
             $table->index('id_user', 'task_user_idx');

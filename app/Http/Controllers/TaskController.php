@@ -9,18 +9,17 @@ use JetBrains\PhpStorm\NoReturn;
 class TaskController extends Controller
 {
     public function tasks() : string {
-        header('Access-Control-Allow-Origin: *');
         $response = Task::all();
         return json_encode($response);
     }
 
     public function updateTask(): void {
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token');
-        if (isset($_POST['task'])) {
-            //return json_encode($_POST['task']);
-        }
-        //return 'false';
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+        $task = Task::find($body->id);
+        $task->name = $body->name;
+        $task->is_flagged = $body->is_flagged;
+        $task->is_done = $body->is_done;
+        $task->save();
     }
 }
