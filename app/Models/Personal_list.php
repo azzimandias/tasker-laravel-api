@@ -12,4 +12,5 @@ class Personal_list extends Model
     use SoftDeletes;
     protected $table = 'personal_lists';
     protected $guarded = false;
+    protected $fillable = ['name','color'];
 }

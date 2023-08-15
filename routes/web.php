@@ -29,5 +29,6 @@ Route::get('/tags', [TagController::class, 'tags']);
 Route::get('/list', [PersonalListController::class, 'personalListTasks']);
 Route::get('/tag', [TagController::class, 'taggedTasks']);
 Route::post('/updateTask', [TaskController::class, 'updateTask']);
+Route::post('/saveList', [PersonalListController::class, 'saveList']);
 
 require __DIR__.'/auth.php';

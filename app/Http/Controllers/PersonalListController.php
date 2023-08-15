@@ -102,4 +102,14 @@ class PersonalListController extends Controller
         }
         return json_encode($result);
     }
+
+    public function saveList() : void {
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+        $list = new Personal_list;
+        $list->name = $body->name;
+        $list->color = $body->color;
+        $list->count_of_active_tasks = 0;
+        $list->save();
+    }
 }
