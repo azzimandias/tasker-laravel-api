@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('personal_lists', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->integer('count_of_active_tasks');
+            $table->integer('count_of_active_tasks')->default(0);
             $table->string('color');
             $table->timestamps();
             $table->softDeletes();
