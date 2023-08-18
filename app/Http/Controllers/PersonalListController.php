@@ -55,35 +55,46 @@ class PersonalListController extends Controller
 
     public function sortListToday() : array {
         return [
-            'Сегодня',
+            [
+                'id' => 1,
+                'name' => 'Сегодня'
+            ],
             Task::where('deadline', date('Y-m-d'))->get()
         ];
     }
     public function sortListWithFlag() : array {
         return [
-            'С флажком',
+            [
+                'id' => 2,
+                'name' => 'С флажком'
+            ],
             Task::where('is_flagged', 1)->get()
         ];
     }
     public function sortListDone() : array {
         return [
-            'Завершено',
+            [
+                'id' => 3,
+                'name' => 'Завершено'
+            ],
             Task::where('is_done', 1)->get()
         ];
     }
     public function sortListAll() : array {
         return [
-            'Все',
+            [
+                'id' => 4,
+                'name' => 'Все'
+            ],
             Task::all()
         ];
     }
     public function personalListTasks() : string {
         $result = '';
         if(isset($_GET['id'])) {
-            $response = Personal_list::find($_GET['id']);
-            $listName = $response['name'];
+            $list = Personal_list::find($_GET['id']);
             $response = Task::where('id_list', $_GET['id'])->get();
-            $result = [$listName, $response];
+            $result = [$list, $response];
         } elseif (isset($_GET['name'])) {
             switch ($_GET['name']) {
                 case 'today':
