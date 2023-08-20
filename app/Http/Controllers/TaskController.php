@@ -18,8 +18,18 @@ class TaskController extends Controller
         $body = json_decode($body);
         $task = Task::find($body->id);
         $task->name = $body->name;
+        $task->description = $body->description;
         $task->is_flagged = $body->is_flagged;
         $task->is_done = $body->is_done;
+        $task->save();
+    }
+
+    public function createTask() : void {
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+        $task = new Task;
+        $task->name = $body->name;
+        $task->id_list = $body->id_list;
         $task->save();
     }
 }
