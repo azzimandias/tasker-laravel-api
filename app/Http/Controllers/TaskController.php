@@ -24,12 +24,13 @@ class TaskController extends Controller
         $task->save();
     }
 
-    public function createTask() : void {
+    public function createTask() : string {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
         $task = new Task;
         $task->name = $body->name;
         $task->id_list = $body->id_list;
         $task->save();
+        return json_encode($task);
     }
 }
