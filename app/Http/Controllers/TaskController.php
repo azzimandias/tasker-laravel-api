@@ -19,6 +19,7 @@ class TaskController extends Controller
         $task = Task::find($body->id);
         $task->name = $body->name;
         $task->description = $body->description;
+        $task->deadline = $body->deadline;
         $task->is_flagged = $body->is_flagged;
         $task->is_done = $body->is_done;
         $task->save();
