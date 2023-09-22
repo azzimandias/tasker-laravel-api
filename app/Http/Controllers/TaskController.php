@@ -17,11 +17,23 @@ class TaskController extends Controller
         $body = file_get_contents('php://input');
         $body = json_decode($body);
         $task = Task::find($body->id);
-        $task->name = $body->name;
-        $task->description = $body->description;
-        $task->deadline = $body->deadline;
-        $task->is_flagged = $body->is_flagged;
-        $task->is_done = $body->is_done;
+        switch ($body->name) {
+            case 'name':
+                $task->name = $body->value;
+                break;
+            case 'description':
+                $task->description = $body->value;
+                break;
+            case 'deadline':
+                $task->deadline = $body->value;
+                break;
+            case 'is_flagged':
+                $task->is_flagged = $body->value;
+                break;
+            case 'is_done':
+                $task->is_done = $body->value;
+                break;
+        }
         $task->save();
     }
 
