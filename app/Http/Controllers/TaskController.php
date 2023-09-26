@@ -46,4 +46,11 @@ class TaskController extends Controller
         $task->save();
         return json_encode($task);
     }
+
+    public function deleteTask() : void {
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+        $task = Task::find($body->id);
+        $task->delete();
+    }
 }

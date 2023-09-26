@@ -30,6 +30,7 @@ Route::get('/list', [PersonalListController::class, 'personalListTasks']);
 Route::get('/tag', [TagController::class, 'taggedTasks']);
 Route::post('/updateTask', [TaskController::class, 'updateTask']);
 Route::post('/createTask', [TaskController::class, 'createTask']);
+Route::post('/deleteTask', [TaskController::class, 'deleteTask']);
 Route::post('/saveList', [PersonalListController::class, 'saveList']);
 
 require __DIR__.'/auth.php';
