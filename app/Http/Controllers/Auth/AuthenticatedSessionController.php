@@ -35,4 +35,12 @@ class AuthenticatedSessionController extends Controller
 
         return response()->noContent();
     }
+
+    /**
+     * Check if the session is authenticated.
+     */
+    public function check(Request $request) : Response
+    {
+        return response('yes', 200);
+    }
 }
