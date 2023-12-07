@@ -5,13 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Models\Personal_list;
+use App\Models\User_List;
 use JetBrains\PhpStorm\NoReturn;
 
 class PersonalListController extends Controller
 {
     public function lists() : string {
-        $this->updatePersonalCountOfActiveTasks();
-        $response = Personal_list::all();
+        //$this->updatePersonalCountOfActiveTasks();
+        $response = Personal_list::select('personal_lists.*')
+            ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+            ->where('user_list.user_id',$_GET['user_id'])
+            ->get();
         return json_encode($response);
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\DevController;
 use App\Http\Controllers\PersonalListController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,6 +29,7 @@ Route::get('/sortLists', [PersonalListController::class, 'sortLists']);
 Route::get('/tags', [TagController::class, 'tags']);
 Route::get('/list', [PersonalListController::class, 'personalListTasks']);
 Route::get('/tag', [TagController::class, 'taggedTasks']);
+Route::get('/user', [UserController::class, 'users']);
 Route::post('/updateTask', [TaskController::class, 'updateTask']);
 Route::post('/createTask', [TaskController::class, 'createTask']);
 Route::post('/deleteTask', [TaskController::class, 'deleteTask']);
