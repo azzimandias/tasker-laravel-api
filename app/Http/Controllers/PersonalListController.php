@@ -11,7 +11,7 @@ use JetBrains\PhpStorm\NoReturn;
 class PersonalListController extends Controller
 {
     public function lists() : string {
-        //$this->updatePersonalCountOfActiveTasks();
+        $this->updatePersonalCountOfActiveTasks();
         $response = Personal_list::select('personal_lists.*')
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id',$_GET['user_id'])
@@ -20,7 +20,10 @@ class PersonalListController extends Controller
     }
 
     private function updatePersonalCountOfActiveTasks() : void {
-        $personal_lists = Personal_list::all();
+        $personal_lists = Personal_list::select('personal_lists.*')
+            ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+            ->where('user_list.user_id',$_GET['user_id'])
+            ->get();
         foreach ($personal_lists as $list) {
             $arr = Task::where('id_list', $list['id'])->get();
             $pl = Personal_list::find($list['id']);
@@ -40,19 +43,38 @@ class PersonalListController extends Controller
         return [
             [
                 'id' => 1,
-                'count' => count(Task::where('deadline', date('Y-m-d'))->get())
+                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                    ->where('user_list.user_id', $_GET['user_id'])
+                    ->where('tasks.deadline', date('Y-m-d'))
+                    ->get()
+                )
             ],
             [
                 'id' => 2,
-                'count' => count(Task::where('is_flagged', 1)->get())
+                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                    ->where('user_list.user_id', $_GET['user_id'])
+                    ->where('is_flagged', 1)
+                    ->get()
+                )
             ],
             [
                 'id' => 3,
-                'count' => count(Task::where('is_done', 1)->get())
+                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                    ->where('user_list.user_id', $_GET['user_id'])
+                    ->where('is_done', 1)
+                    ->get()
+                )
             ],
             [
                 'id' => 4,
-                'count' => count(Task::all())
+                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                    ->where('user_list.user_id', $_GET['user_id'])
+                    ->get()
+                )
             ],
         ];
     }
@@ -63,7 +85,11 @@ class PersonalListController extends Controller
                 'id' => 1,
                 'name' => 'Сегодня'
             ],
-            Task::where('deadline', date('Y-m-d'))->get()
+            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                ->where('user_list.user_id', $_GET['user_id'])
+                ->where('deadline', date('Y-m-d'))
+                ->get()
         ];
     }
     public function sortListWithFlag() : array {
@@ -72,7 +98,11 @@ class PersonalListController extends Controller
                 'id' => 2,
                 'name' => 'С флажком'
             ],
-            Task::where('is_flagged', 1)->get()
+            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                ->where('user_list.user_id', $_GET['user_id'])
+                ->where('is_flagged', 1)
+                ->get()
         ];
     }
     public function sortListDone() : array {
@@ -81,7 +111,11 @@ class PersonalListController extends Controller
                 'id' => 3,
                 'name' => 'Завершено'
             ],
-            Task::where('is_done', 1)->get()
+            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                ->where('user_list.user_id', $_GET['user_id'])
+                ->where('is_done', 1)
+                ->get()
         ];
     }
     public function sortListAll() : array {
@@ -90,7 +124,10 @@ class PersonalListController extends Controller
                 'id' => 4,
                 'name' => 'Все'
             ],
-            Task::all()
+            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+                ->where('user_list.user_id', $_GET['user_id'])
+                ->get()
         ];
     }
     public function personalListTasks() : string {
@@ -121,10 +158,16 @@ class PersonalListController extends Controller
     public function saveList() : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+
         $list = new Personal_list;
         $list->name = $body->name;
         $list->color = $body->color;
         $list->count_of_active_tasks = 0;
         $list->save();
+
+        $user_list = new User_List;
+        $user_list->user_id = $body->user_id;
+        $user_list->list_id = $list->id;
+        $user_list->save();
     }
 }
