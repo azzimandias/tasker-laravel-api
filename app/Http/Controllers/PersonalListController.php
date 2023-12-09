@@ -170,4 +170,10 @@ class PersonalListController extends Controller
         $user_list->list_id = $list->id;
         $user_list->save();
     }
+
+    public function deleteList() : void {
+        $body = file_get_contents('php://input');
+        $list = Personal_list::find($body);
+        $list->delete();
+    }
 }

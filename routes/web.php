@@ -34,5 +34,6 @@ Route::post('/updateTask', [TaskController::class, 'updateTask']);
 Route::post('/createTask', [TaskController::class, 'createTask']);
 Route::post('/deleteTask', [TaskController::class, 'deleteTask']);
 Route::post('/saveList', [PersonalListController::class, 'saveList']);
+Route::post('/deleteList', [PersonalListController::class, 'deleteList']);
 
 require __DIR__.'/auth.php';
