@@ -134,7 +134,9 @@ class PersonalListController extends Controller
         $result = '';
         if(isset($_GET['id'])) {
             $list = Personal_list::find($_GET['id']);
-            $response = Task::where('id_list', $_GET['id'])->get();
+            $response = Task::where('id_list', $_GET['id'])
+                ->orderBy('is_done')
+                ->get();
             $result = [$list, $response];
         } elseif (isset($_GET['name'])) {
             switch ($_GET['name']) {
