@@ -46,6 +46,7 @@ class PersonalListController extends Controller
                 'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
+                    ->where('personal_lists.deleted_at', null)
                     ->where('tasks.deadline', date('Y-m-d'))
                     ->get()
                 )
@@ -55,6 +56,7 @@ class PersonalListController extends Controller
                 'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
+                    ->where('personal_lists.deleted_at', null)
                     ->where('is_flagged', 1)
                     ->get()
                 )
@@ -64,6 +66,7 @@ class PersonalListController extends Controller
                 'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
+                    ->where('personal_lists.deleted_at', null)
                     ->where('is_done', 1)
                     ->get()
                 )
@@ -73,85 +76,158 @@ class PersonalListController extends Controller
                 'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
+                    ->where('personal_lists.deleted_at', null)
                     ->get()
                 )
             ],
         ];
     }
 
-    public function sortListToday() : array {
-        return [
-            [
-                'id' => 1,
-                'name' => 'Сегодня'
-            ],
-            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+    public function sortListToday($id_list) : object {
+        return Task::select('personal_lists.id as personal_list_id',
+                'personal_lists.name as personal_list_name',
+                'personal_lists.color as color',
+                'tasks.id as id',
+                'tasks.name as name',
+                'tasks.is_done as is_done',
+                'tasks.is_flagged as is_flagged',
+                'tasks.description as description',
+                'tasks.deadline as deadline')
+                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
                 ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                 ->where('user_list.user_id', $_GET['user_id'])
+                ->where('personal_lists.id', $id_list)
+                ->where('personal_lists.deleted_at', null)
                 ->where('deadline', date('Y-m-d'))
-                ->get()
-        ];
+                ->get();
     }
-    public function sortListWithFlag() : array {
-        return [
-            [
-                'id' => 2,
-                'name' => 'С флажком'
-            ],
-            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+    public function sortListWithFlag($id_list) : object {
+        return Task::select('personal_lists.id as personal_list_id',
+                'personal_lists.name as personal_list_name',
+                'personal_lists.color as color',
+                'tasks.id as id',
+                'tasks.name as name',
+                'tasks.is_done as is_done',
+                'tasks.is_flagged as is_flagged',
+                'tasks.description as description',
+                'tasks.deadline as deadline')
+                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
                 ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                 ->where('user_list.user_id', $_GET['user_id'])
+                ->where('personal_lists.id', $id_list)
+                ->where('personal_lists.deleted_at', null)
                 ->where('is_flagged', 1)
-                ->get()
-        ];
+                ->get();
     }
-    public function sortListDone() : array {
-        return [
-            [
-                'id' => 3,
-                'name' => 'Завершено'
-            ],
-            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+    public function sortListDone($id_list) : object {
+        return Task::select('personal_lists.id as personal_list_id',
+                'personal_lists.name as personal_list_name',
+                'personal_lists.color as color',
+                'tasks.id as id',
+                'tasks.name as name',
+                'tasks.is_done as is_done',
+                'tasks.is_flagged as is_flagged',
+                'tasks.description as description',
+                'tasks.deadline as deadline')
+                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
                 ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                 ->where('user_list.user_id', $_GET['user_id'])
+                ->where('personal_lists.id', $id_list)
+                ->where('personal_lists.deleted_at', null)
                 ->where('is_done', 1)
-                ->get()
-        ];
+                ->get();
     }
-    public function sortListAll() : array {
-        return [
-            [
-                'id' => 4,
-                'name' => 'Все'
-            ],
-            Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+    public function sortListAll($id_list) : object {
+        return Task::select('personal_lists.id as personal_list_id',
+                'personal_lists.name as personal_list_name',
+                'personal_lists.color as color',
+                'tasks.id as id',
+                'tasks.name as name',
+                'tasks.is_done as is_done',
+                'tasks.is_flagged as is_flagged',
+                'tasks.description as description',
+                'tasks.deadline as deadline')
+                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
                 ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                 ->where('user_list.user_id', $_GET['user_id'])
-                ->get()
-        ];
+                ->where('personal_lists.id', $id_list)
+                ->where('personal_lists.deleted_at', null)
+                ->get();
     }
     public function personalListTasks() : string {
-        $result = '';
+        $result = [];
         if(isset($_GET['id'])) {
             $list = Personal_list::find($_GET['id']);
             $response = Task::where('id_list', $_GET['id'])
                 ->orderBy('is_done')
                 ->get();
-            $result = [$list, $response];
+            $result = ['list'=>$list, 'tasks'=>$response];
         } elseif (isset($_GET['name'])) {
+            $personal_lists = Personal_list::where('deleted_at', null)->get();
+
             switch ($_GET['name']) {
                 case 'today':
-                    $result = $this->sortListToday();
+                    $result = [
+                        'sortList' => [
+                            'id' => 1,
+                            'name' => 'Сегодня'
+                        ]
+                    ];
                     break;
                 case 'with_flag':
-                    $result = $this->sortListWithFlag();
+                    $result = [
+                        'sortList' => [
+                            'id' => 2,
+                            'name' => 'С флажком'
+                        ]
+                    ];
                     break;
                 case 'done':
-                    $result = $this->sortListDone();
+                    $result = [
+                        'sortList' =>[
+                            'id' => 3,
+                            'name' => 'Завершено'
+                        ]
+                    ];
                     break;
                 case 'all':
-                    $result = $this->sortListAll();
+                    $result = [
+                        'sortList' =>[
+                            'id' => 4,
+                            'name' => 'Все'
+                        ]
+                    ];
                     break;
+            }
+            $result['tasksByList'] = [];
+
+            foreach ($personal_lists as $pl) {
+                switch ($_GET['name']) {
+                    case 'today':
+                        $tasks = $this->sortListToday($pl['id']);
+                        if (count($tasks) > 0) {
+                            $result['tasksByList'][] = ['personal_list' => $pl,'tasks' => $tasks];
+                        }
+                        break;
+                    case 'with_flag':
+                        $tasks = $this->sortListWithFlag($pl['id']);
+                        if (count($tasks) > 0) {
+                            $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
+                        }
+                        break;
+                    case 'done':
+                        $tasks = $this->sortListDone($pl['id']);
+                        if (count($tasks) > 0) {
+                            $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
+                        }
+                        break;
+                    case 'all':
+                        $tasks = $this->sortListAll($pl['id']);
+                        if (count($tasks) > 0) {
+                            $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
+                        }
+                        break;
+                }
             }
         }
         return json_encode($result);
