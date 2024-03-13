@@ -53,4 +53,11 @@ class TaskController extends Controller
         $task = Task::find($body->id);
         $task->delete();
     }
+
+    public function globalSearch() : string {
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+
+        return json_encode('');
+    }
 }
