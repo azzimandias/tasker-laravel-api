@@ -26,7 +26,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 
 });
-
+Route::middleware(['auth:sanctum'])->group(function () {
 Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
@@ -46,3 +46,4 @@ Route::post('/saveList', [PersonalListController::class, 'saveList']);
 Route::post('/deleteList', [PersonalListController::class, 'deleteList']);
 Route::post('/globalSearch', [TaskController::class, 'globalSearch']);
 require __DIR__.'/auth.php';
+});
