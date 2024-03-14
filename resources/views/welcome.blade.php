@@ -1,1 +1,1 @@
-<h1>Hello, gay</h1>
+<h1>Hello world!</h1>

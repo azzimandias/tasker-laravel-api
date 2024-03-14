@@ -57,7 +57,7 @@ class TaskController extends Controller
     public function globalSearch() : string {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
-
+        
         return json_encode('');
     }
 }
