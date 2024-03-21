@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['PUT', 'PATCH', 'DELETE'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'https://azzimandias.github.io/tasker')],
+    'allowed_origins' => [env('FRONTEND_URL', 'https://azzimandias.github.io/tasker/')],
 
     'allowed_origins_patterns' => [],
 
