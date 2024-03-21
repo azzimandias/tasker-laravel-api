@@ -17,9 +17,9 @@ return [
 
     'paths' => ['*'],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['PUT', 'PATCH', 'DELETE'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:3000')],
+    'allowed_origins' => [env('FRONTEND_URL', 'https://azzimandias.github.io/tasker')],
 
     'allowed_origins_patterns' => [],
 
