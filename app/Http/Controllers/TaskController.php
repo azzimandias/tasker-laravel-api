@@ -10,7 +10,7 @@ class TaskController extends Controller
 {
     public function tasks() : string {
         $response = Task::all();
-        return json_encode($response);
+        return response()->json($response);
     }
 
     public function updateTask(): void {
@@ -59,6 +59,6 @@ class TaskController extends Controller
         $tasks = Task::where('name', 'like', "%$body%")
             ->where('deleted_at', null)
             ->get();
-        return json_encode($tasks);
+        return response()->json($tasks);
     }
 }
