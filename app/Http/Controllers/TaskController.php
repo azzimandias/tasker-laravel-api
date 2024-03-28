@@ -59,6 +59,6 @@ class TaskController extends Controller
         $tasks = Task::where('name', 'like', "%$body%")
             ->where('deleted_at', null)
             ->get();
-        return response()->json($tasks);
+        return json_encode($tasks);
     }
 }
