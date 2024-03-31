@@ -158,10 +158,13 @@ class PersonalListController extends Controller
         $result = [];
         if(isset($_GET['id'])) {
             $list = Personal_list::find($_GET['id']);
-            $response = Task::where('id_list', $_GET['id'])
-                ->orderBy('is_done')
+            $tasks = Task::where('id_list', $_GET['id'])
+                ->where('is_done', '=', '0')
                 ->get();
-            $result = ['list'=>$list, 'tasks'=>$response];
+            $tasksDone = Task::where('id_list', $_GET['id'])
+                ->where('is_done', '=', '1')
+                ->get();
+            $result = ['list'=>$list, 'tasks'=>$tasks, 'tasksDone'=>$tasksDone];
         } elseif (isset($_GET['name'])) {
             $personal_lists = Personal_list::where('deleted_at', null)->get();
 
