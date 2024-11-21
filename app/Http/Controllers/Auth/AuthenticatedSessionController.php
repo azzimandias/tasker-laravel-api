@@ -19,7 +19,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return response()->noContent();
+        return response('done', 200);
     }
 
     /**
