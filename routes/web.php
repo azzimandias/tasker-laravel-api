@@ -13,7 +13,7 @@ Route::get('/', function () {
 });
 //Route::get('/', function () { return view('welcome'); });
 Route::get('/dev/create', [DevController::class, 'devCreate']);
-Route::get('/tasks', [TaskController::class, 'tasks']);
+//Route::get('/tasks', [TaskController::class, 'tasks']);
 Route::get('/lists', [PersonalListController::class, 'lists']);
 Route::get('/sortLists', [PersonalListController::class, 'sortLists']);
 Route::get('/tags', [TagController::class, 'tags']);
