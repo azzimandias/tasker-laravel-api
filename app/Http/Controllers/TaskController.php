@@ -56,6 +56,7 @@ class TaskController extends Controller
 
     public function globalSearch() : string {
         $body = file_get_contents('php://input');
+        $body = json_decode($body);
         $searchString = $body->searchString;
         $tasks = Task::where('name', 'like', "%$searchString%")
             ->where('deleted_at', null)
