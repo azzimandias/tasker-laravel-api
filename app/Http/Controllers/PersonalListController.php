@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Tag;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Models\Personal_list;
 use App\Models\User_List;
+use App\Models\Tag_Task;
 use JetBrains\PhpStorm\NoReturn;
 
 class PersonalListController extends Controller
@@ -83,8 +85,8 @@ class PersonalListController extends Controller
         ];
     }
 
-    public function sortListToday($id_list) : object {
-        return Task::select('personal_lists.id as personal_list_id',
+    private function sortListToday($id_list) : object {
+        $tasks = Task::select('personal_lists.id as personal_list_id',
                 'personal_lists.name as personal_list_name',
                 'personal_lists.color as color',
                 'tasks.id as id',
@@ -100,9 +102,10 @@ class PersonalListController extends Controller
                 ->where('personal_lists.deleted_at', null)
                 ->where('deadline', date('Y-m-d'))
                 ->get();
+        return $this->addTagsToTasks($tasks);
     }
-    public function sortListWithFlag($id_list) : object {
-        return Task::select('personal_lists.id as personal_list_id',
+    private function sortListWithFlag($id_list) : object {
+        $tasks =  Task::select('personal_lists.id as personal_list_id',
                 'personal_lists.name as personal_list_name',
                 'personal_lists.color as color',
                 'tasks.id as id',
@@ -118,9 +121,10 @@ class PersonalListController extends Controller
                 ->where('personal_lists.deleted_at', null)
                 ->where('is_flagged', 1)
                 ->get();
+        return $this->addTagsToTasks($tasks);
     }
-    public function sortListDone($id_list) : object {
-        return Task::select('personal_lists.id as personal_list_id',
+    private function sortListDone($id_list) : object {
+        $tasks = Task::select('personal_lists.id as personal_list_id',
                 'personal_lists.name as personal_list_name',
                 'personal_lists.color as color',
                 'tasks.id as id',
@@ -136,9 +140,10 @@ class PersonalListController extends Controller
                 ->where('personal_lists.deleted_at', null)
                 ->where('is_done', 1)
                 ->get();
+        return $this->addTagsToTasks($tasks);
     }
-    public function sortListAll($id_list) : object {
-        return Task::select('personal_lists.id as personal_list_id',
+    private function sortListAll($id_list) : object {
+        $tasks = Task::select('personal_lists.id as personal_list_id',
                 'personal_lists.name as personal_list_name',
                 'personal_lists.color as color',
                 'tasks.id as id',
@@ -153,6 +158,18 @@ class PersonalListController extends Controller
                 ->where('personal_lists.id', $id_list)
                 ->where('personal_lists.deleted_at', null)
                 ->get();
+        return $this->addTagsToTasks($tasks);
+    }
+    private function addTagsToTasks($tasks) : object {
+        for ($i = 0; $i < count($tasks); $i++) {
+            $tags = Tag::select('tags.id', 'tags.name')
+                ->join('tag_task','tags.id','=','tag_task.tag_id')
+                ->where('tag_task.task_id', '=', $tasks[$i]->id)
+                ->where('tag_task.deleted_at', '=', null)
+                ->get();
+            $tasks[$i]->tags = $tags;
+        }
+        return $tasks;
     }
     public function personalListTasks() : string {
         $result = [];
@@ -164,6 +181,22 @@ class PersonalListController extends Controller
             $tasksDone = Task::where('id_list', $_GET['id'])
                 ->where('is_done', '=', '1')
                 ->get();
+            for ($i = 0; $i < count($tasks); $i++) {
+                $tags = Tag::select('tags.id', 'tags.name')
+                    ->join('tag_task','tags.id','=','tag_task.tag_id')
+                    ->where('tag_task.task_id', '=', $tasks[$i]->id)
+                    ->where('tag_task.deleted_at', '=', null)
+                    ->get();
+                $tasks[$i]->tags = $tags;
+            }
+            for ($i = 0; $i < count($tasksDone); $i++) {
+                $tags = Tag::select('tags.id', 'tags.name')
+                    ->join('tag_task','tags.id','=','tag_task.tag_id')
+                    ->where('tag_task.task_id', '=', $tasksDone[$i]->id)
+                    ->where('tag_task.deleted_at', '=', null)
+                    ->get();
+                $tasksDone[$i]->tags = $tags;
+            }
             $result = ['list'=>$list, 'tasks'=>$tasks, 'tasksDone'=>$tasksDone];
         } elseif (isset($_GET['name'])) {
             $personal_lists = Personal_list::where('deleted_at', null)->get();
