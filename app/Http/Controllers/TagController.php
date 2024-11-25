@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Personal_list;
 use App\Models\Tag;
 use App\Models\Tag_Task;
 use App\Models\Task;
@@ -27,21 +28,45 @@ class TagController extends Controller
         $idxs = null;
         $tasks = [];
         $tag = array();
+        $tasksByList = [];
+        $personal_lists = Personal_list::where('deleted_at', null)->get();
         if(isset($_GET['id'])) { $idxs = $_GET['id']; }
         if((int)$idxs !== 0) {
             $tag = Tag::find($idxs);
-            $tasks = Tag::join('tag_task', 'tags.id', '=', 'tag_task.tag_id')
-                ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
-                ->where('tag_task.deleted_at', '=', null)
-                ->where('tags.id', $idxs)
-                ->get();
+            foreach ($personal_lists as $pl) {
+                $tasks = Tag::join('tag_task', 'tags.id', '=', 'tag_task.tag_id')
+                    ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
+                    ->where('tasks.id_list', $pl->id)
+                    ->where('tag_task.deleted_at', '=', null)
+                    ->where('tags.id', $idxs)
+                    ->get();
+                if ($tasks) {
+                    $tasks = $this->addTagsToTasks($tasks);
+                    $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
+                }
+            }
         } else {
             $tag = array('name' => 'Все теги');
-            $tasks = Tag_Task::select('tasks.*')
-                ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
-                ->groupBy('tasks.id')
-                ->get();
+            foreach ($personal_lists as $pl) {
+                $tasks = Tag_Task::select('tasks.*')
+                    ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
+                    ->where('tasks.id_list', $pl->id)
+                    ->where('tag_task.deleted_at', '=', null)
+                    ->groupBy('tasks.id')
+                    ->get();
+                if ($tasks) {
+                    $tasks = $this->addTagsToTasks($tasks);
+                    $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
+                }
+            }
         }
+        return json_encode(array(
+            'tag' => $tag,
+            'tasksByList' => $tasksByList
+        ));
+    }
+
+    private function addTagsToTasks($tasks) : object {
         for ($i = 0; $i < count($tasks); $i++) {
             $tags = Tag::select('tags.id', 'tags.name')
                 ->join('tag_task','tags.id','=','tag_task.tag_id')
@@ -50,10 +75,7 @@ class TagController extends Controller
                 ->get();
             $tasks[$i]->tags = $tags;
         }
-        return json_encode(array(
-            'tag' => $tag,
-            'tasks' => $tasks
-        ));
+        return $tasks;
     }
 
     public function createTag() : string {

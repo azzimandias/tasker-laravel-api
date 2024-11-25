@@ -181,22 +181,8 @@ class PersonalListController extends Controller
             $tasksDone = Task::where('id_list', $_GET['id'])
                 ->where('is_done', '=', '1')
                 ->get();
-            for ($i = 0; $i < count($tasks); $i++) {
-                $tags = Tag::select('tags.id', 'tags.name')
-                    ->join('tag_task','tags.id','=','tag_task.tag_id')
-                    ->where('tag_task.task_id', '=', $tasks[$i]->id)
-                    ->where('tag_task.deleted_at', '=', null)
-                    ->get();
-                $tasks[$i]->tags = $tags;
-            }
-            for ($i = 0; $i < count($tasksDone); $i++) {
-                $tags = Tag::select('tags.id', 'tags.name')
-                    ->join('tag_task','tags.id','=','tag_task.tag_id')
-                    ->where('tag_task.task_id', '=', $tasksDone[$i]->id)
-                    ->where('tag_task.deleted_at', '=', null)
-                    ->get();
-                $tasksDone[$i]->tags = $tags;
-            }
+            $tasks = $this->addTagsToTasks($tasks);
+            $tasksDone = $this->addTagsToTasks($tasksDone);
             $result = ['list'=>$list, 'tasks'=>$tasks, 'tasksDone'=>$tasksDone];
         } elseif (isset($_GET['name'])) {
             $personal_lists = Personal_list::where('deleted_at', null)->get();
@@ -241,25 +227,25 @@ class PersonalListController extends Controller
                 switch ($_GET['name']) {
                     case 'today':
                         $tasks = $this->sortListToday($pl['id']);
-                        if (count($tasks) > 0) {
+                        if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl,'tasks' => $tasks];
                         }
                         break;
                     case 'with_flag':
                         $tasks = $this->sortListWithFlag($pl['id']);
-                        if (count($tasks) > 0) {
+                        if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
                     case 'done':
                         $tasks = $this->sortListDone($pl['id']);
-                        if (count($tasks) > 0) {
+                        if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
                     case 'all':
                         $tasks = $this->sortListAll($pl['id']);
-                        if (count($tasks) > 0) {
+                        if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
