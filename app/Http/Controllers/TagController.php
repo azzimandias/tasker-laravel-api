@@ -46,7 +46,10 @@ class TagController extends Controller
                 }
             }
         } else {
-            $tag = array('name' => 'Все теги');
+            $tag = array(
+                'id' => 0,
+                'name' => 'Все теги'
+            );
             foreach ($personal_lists as $pl) {
                 $tasks = Tag_Task::select('tasks.*')
                     ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
