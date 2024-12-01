@@ -276,4 +276,13 @@ class PersonalListController extends Controller
         $list = Personal_list::find($body);
         $list->delete();
     }
+
+    public function updateListName() : void {
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+
+        $list = Personal_list::find($body->id);
+        $list->name = $body->name;
+        $list->save();
+    }
 }

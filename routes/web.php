@@ -30,4 +30,5 @@ Route::post('/updateUserInfo', [UserController::class, 'updateUserInfo']);
 Route::post('/createTag', [TagController::class, 'createTag']);
 Route::post('/updateTag', [TagController::class, 'updateTag']);
 Route::post('/deleteTagTask', [TagController::class, 'deleteTagTask']);
+Route::post('/updateListName', [PersonalListController::class, 'updateListName']);
 require __DIR__.'/auth.php';
