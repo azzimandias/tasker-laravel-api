@@ -11,9 +11,7 @@ use App\Http\Controllers\UserController;
 Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
-//Route::get('/', function () { return view('welcome'); });
 Route::get('/dev/create', [DevController::class, 'devCreate']);
-//Route::get('/tasks', [TaskController::class, 'tasks']);
 Route::get('/lists', [PersonalListController::class, 'lists']);
 Route::get('/sortLists', [PersonalListController::class, 'sortLists']);
 Route::get('/tags', [TagController::class, 'tags']);
@@ -27,6 +25,7 @@ Route::post('/saveList', [PersonalListController::class, 'saveList']);
 Route::post('/deleteList', [PersonalListController::class, 'deleteList']);
 Route::post('/globalSearch', [TaskController::class, 'globalSearch']);
 Route::post('/updateUserInfo', [UserController::class, 'updateUserInfo']);
+Route::post('/addTagToTask', [TagController::class, 'addTagToTask']);
 Route::post('/createTag', [TagController::class, 'createTag']);
 Route::post('/updateTag', [TagController::class, 'updateTag']);
 Route::post('/deleteTagTask', [TagController::class, 'deleteTagTask']);

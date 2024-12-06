@@ -85,104 +85,90 @@ class PersonalListController extends Controller
         ];
     }
 
-    private function sortListToday($id_list) : object {
+    private function personalList($id_list, $isDone) : object {
+        return Task::where('id_list', $id_list)
+            ->where('is_done', '=', (int)$isDone)
+            ->get()
+            ->map(function($task) {
+                $tags = Tag::select('tags.id', 'tags.name')
+                    ->join('tag_task','tags.id','=','tag_task.tag_id')
+                    ->where('tag_task.task_id', '=', $task->id)
+                    ->where('tag_task.deleted_at', '=', null)
+                    ->get();
+                $possibleTags = Tag::select('tags.id', 'tags.name')
+                    ->whereNotIn('tags.id', $tags->pluck('id'))
+                    ->get();
+                return [
+                    'id' => $task->id,
+                    'name' => $task->name,
+                    'id_list' => $task->id_list,
+                    'is_done' => $task->is_done,
+                    'is_flagged' => $task->is_flagged,
+                    'description' => $task->description,
+                    'deadline' => $task->deadline,
+                    'tags' => $tags,
+                    'possibleTags' => $possibleTags,
+                ];
+            });
+    }
+
+    private function sortList($id_list, $case = null) : object {
         $tasks = Task::select('personal_lists.id as personal_list_id',
-                'personal_lists.name as personal_list_name',
-                'personal_lists.color as color',
-                'tasks.id as id',
-                'tasks.name as name',
-                'tasks.is_done as is_done',
-                'tasks.is_flagged as is_flagged',
-                'tasks.description as description',
-                'tasks.deadline as deadline')
-                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
-                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                ->where('user_list.user_id', $_GET['user_id'])
-                ->where('personal_lists.id', $id_list)
-                ->where('personal_lists.deleted_at', null)
-                ->where('deadline', date('Y-m-d'))
-                ->get();
-        return $this->addTagsToTasks($tasks);
-    }
-    private function sortListWithFlag($id_list) : object {
-        $tasks =  Task::select('personal_lists.id as personal_list_id',
-                'personal_lists.name as personal_list_name',
-                'personal_lists.color as color',
-                'tasks.id as id',
-                'tasks.name as name',
-                'tasks.is_done as is_done',
-                'tasks.is_flagged as is_flagged',
-                'tasks.description as description',
-                'tasks.deadline as deadline')
-                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
-                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                ->where('user_list.user_id', $_GET['user_id'])
-                ->where('personal_lists.id', $id_list)
-                ->where('personal_lists.deleted_at', null)
-                ->where('is_flagged', 1)
-                ->get();
-        return $this->addTagsToTasks($tasks);
-    }
-    private function sortListDone($id_list) : object {
-        $tasks = Task::select('personal_lists.id as personal_list_id',
-                'personal_lists.name as personal_list_name',
-                'personal_lists.color as color',
-                'tasks.id as id',
-                'tasks.name as name',
-                'tasks.is_done as is_done',
-                'tasks.is_flagged as is_flagged',
-                'tasks.description as description',
-                'tasks.deadline as deadline')
-                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
-                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                ->where('user_list.user_id', $_GET['user_id'])
-                ->where('personal_lists.id', $id_list)
-                ->where('personal_lists.deleted_at', null)
-                ->where('is_done', 1)
-                ->get();
-        return $this->addTagsToTasks($tasks);
-    }
-    private function sortListAll($id_list) : object {
-        $tasks = Task::select('personal_lists.id as personal_list_id',
-                'personal_lists.name as personal_list_name',
-                'personal_lists.color as color',
-                'tasks.id as id',
-                'tasks.name as name',
-                'tasks.is_done as is_done',
-                'tasks.is_flagged as is_flagged',
-                'tasks.description as description',
-                'tasks.deadline as deadline')
-                ->join('personal_lists','tasks.id_list','=','personal_lists.id')
-                ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                ->where('user_list.user_id', $_GET['user_id'])
-                ->where('personal_lists.id', $id_list)
-                ->where('personal_lists.deleted_at', null)
-                ->get();
-        return $this->addTagsToTasks($tasks);
-    }
-    private function addTagsToTasks($tasks) : object {
-        for ($i = 0; $i < count($tasks); $i++) {
-            $tags = Tag::select('tags.id', 'tags.name')
-                ->join('tag_task','tags.id','=','tag_task.tag_id')
-                ->where('tag_task.task_id', '=', $tasks[$i]->id)
-                ->where('tag_task.deleted_at', '=', null)
-                ->get();
-            $tasks[$i]->tags = $tags;
+            'personal_lists.name as personal_list_name',
+            'personal_lists.color as color',
+            'tasks.id as id',
+            'tasks.name as name',
+            'tasks.is_done as is_done',
+            'tasks.is_flagged as is_flagged',
+            'tasks.description as description',
+            'tasks.deadline as deadline')
+            ->join('personal_lists','tasks.id_list','=','personal_lists.id')
+            ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
+            ->where('user_list.user_id', $_GET['user_id'])
+            ->where('personal_lists.id', $id_list)
+            ->where('personal_lists.deleted_at', null);
+        switch ($case) {
+            case 'today':
+                $tasks->where('deadline', date('Y-m-d'));
+                break;
+            case 'with_flag':
+                $tasks->where('is_flagged', 1);
+                break;
+            case 'done':
+                $tasks->where('is_done', 1);
+                break;
         }
-        return $tasks;
+        return $tasks->get()->map(function($task) {
+                $tags = Tag::select('tags.id', 'tags.name')
+                    ->join('tag_task','tags.id','=','tag_task.tag_id')
+                    ->where('tag_task.task_id', '=', $task->id)
+                    ->where('tag_task.deleted_at', '=', null)
+                    ->get();
+                $possibleTags = Tag::select('tags.id', 'tags.name')
+                    ->whereNotIn('tags.id', $tags->pluck('id'))
+                    ->get();
+                return [
+                    'id' => $task->id,
+                    'name' => $task->name,
+                    'is_done' => $task->is_done,
+                    'is_flagged' => $task->is_flagged,
+                    'description' => $task->description,
+                    'deadline' => $task->deadline,
+                    'personal_list_id' => $task->personal_list_id,
+                    'personal_list_name' => $task->personal_list_name,
+                    'color' => $task->color,
+                    'tags' => $tags,
+                    'possibleTags' => $possibleTags,
+                ];
+        });
     }
+
     public function personalListTasks() : string {
         $result = [];
         if(isset($_GET['id'])) {
             $list = Personal_list::find($_GET['id']);
-            $tasks = Task::where('id_list', $_GET['id'])
-                ->where('is_done', '=', '0')
-                ->get();
-            $tasksDone = Task::where('id_list', $_GET['id'])
-                ->where('is_done', '=', '1')
-                ->get();
-            $tasks = $this->addTagsToTasks($tasks);
-            $tasksDone = $this->addTagsToTasks($tasksDone);
+            $tasks = $this->personalList($_GET['id'], false);
+            $tasksDone = $this->personalList($_GET['id'], true);
             $result = ['list'=>$list, 'tasks'=>$tasks, 'tasksDone'=>$tasksDone];
         } elseif (isset($_GET['name'])) {
             $personal_lists = Personal_list::where('deleted_at', null)->get();
@@ -226,25 +212,25 @@ class PersonalListController extends Controller
             foreach ($personal_lists as $pl) {
                 switch ($_GET['name']) {
                     case 'today':
-                        $tasks = $this->sortListToday($pl['id']);
+                        $tasks = $this->sortList($pl['id'], 'today');
                         if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl,'tasks' => $tasks];
                         }
                         break;
                     case 'with_flag':
-                        $tasks = $this->sortListWithFlag($pl['id']);
+                        $tasks = $this->sortList($pl['id'], 'with_flag');
                         if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
                     case 'done':
-                        $tasks = $this->sortListDone($pl['id']);
+                        $tasks = $this->sortList($pl['id'], 'done');
                         if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
                     case 'all':
-                        $tasks = $this->sortListAll($pl['id']);
+                        $tasks = $this->sortList($pl['id']);
                         if ($tasks) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }

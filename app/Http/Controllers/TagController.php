@@ -31,21 +31,7 @@ class TagController extends Controller
         $tasksByList = [];
         $personal_lists = Personal_list::where('deleted_at', null)->get();
         if(isset($_GET['id'])) { $idxs = $_GET['id']; }
-        if((int)$idxs !== 0) {
-            $tag = Tag::find($idxs);
-            foreach ($personal_lists as $pl) {
-                $tasks = Tag::join('tag_task', 'tags.id', '=', 'tag_task.tag_id')
-                    ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
-                    ->where('tasks.id_list', $pl->id)
-                    ->where('tag_task.deleted_at', '=', null)
-                    ->where('tags.id', $idxs)
-                    ->get();
-                if ($tasks) {
-                    $tasks = $this->addTagsToTasks($tasks);
-                    $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
-                }
-            }
-        } else {
+        if((int)$idxs === 0) {
             $tag = array(
                 'id' => 0,
                 'name' => 'Все теги'
@@ -55,7 +41,23 @@ class TagController extends Controller
                     ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
                     ->where('tasks.id_list', $pl->id)
                     ->where('tag_task.deleted_at', '=', null)
+                    ->where('tasks.deleted_at', '=', null)
                     ->groupBy('tasks.id')
+                    ->get();
+                if ($tasks) {
+                    $tasks = $this->addTagsToTasks($tasks);
+                    $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
+                }
+            }
+        } else {
+            $tag = Tag::find($idxs);
+            foreach ($personal_lists as $pl) {
+                $tasks = Tag::join('tag_task', 'tags.id', '=', 'tag_task.tag_id')
+                    ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
+                    ->where('tasks.id_list', $pl->id)
+                    ->where('tag_task.deleted_at', '=', null)
+                    ->where('tasks.deleted_at', '=', null)
+                    ->where('tags.id', $idxs)
                     ->get();
                 if ($tasks) {
                     $tasks = $this->addTagsToTasks($tasks);
@@ -70,15 +72,39 @@ class TagController extends Controller
     }
 
     private function addTagsToTasks($tasks) : object {
-        for ($i = 0; $i < count($tasks); $i++) {
+        return $tasks->map(function($task) {
             $tags = Tag::select('tags.id', 'tags.name')
                 ->join('tag_task','tags.id','=','tag_task.tag_id')
-                ->where('tag_task.task_id', '=', $tasks[$i]->id)
+                ->where('tag_task.task_id', '=', $task->id)
                 ->where('tag_task.deleted_at', '=', null)
                 ->get();
-            $tasks[$i]->tags = $tags;
-        }
-        return $tasks;
+            $possibleTags = Tag::select('tags.id', 'tags.name')
+                ->whereNotIn('tags.id', $tags->pluck('id'))
+                ->get();
+            return [
+                'id' => $task->id,
+                'name' => $task->name,
+                'id_list' => $task->id_list,
+                'is_done' => $task->is_done,
+                'is_flagged' => $task->is_flagged,
+                'description' => $task->description,
+                'deadline' => $task->deadline,
+                'tags' => $tags,
+                'possibleTags' => $possibleTags,
+            ];
+        });
+    }
+
+    public function addTagToTask() : string {
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+
+        $tag_task = new Tag_Task;
+        $tag_task->tag_id = $body->tag_id;
+        $tag_task->task_id = $body->task_id;
+        $tag_task->save();
+
+        return json_encode($body);
     }
 
     public function createTag() : string {
