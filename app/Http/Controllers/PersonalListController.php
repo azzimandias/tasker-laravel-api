@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Personal_list;
 use App\Models\User_List;
 use App\Models\Tag_Task;
+use Illuminate\Support\Facades\Http;
 use JetBrains\PhpStorm\NoReturn;
 
 class PersonalListController extends Controller
@@ -18,6 +19,7 @@ class PersonalListController extends Controller
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id',$_GET['user_id'])
             ->get();
+        $this->sendPersonalCountOfActiveTasksToSocket($response);
         return json_encode($response);
     }
 
@@ -34,10 +36,19 @@ class PersonalListController extends Controller
         }
     }
 
+    public function sendPersonalCountOfActiveTasksToSocket($object) {
+        $response = Http::post('http://localhost:3001/api/send-new-personal-lists-count', [
+            'room' => 'personal_lists_count',
+            'message' => $object->toArray()
+        ]);
+        return $response->json();
+    }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public function sortLists() : string {
         $result = $this->updateSortCountOfActiveTasks();
+        $this->sendSortCountOfActiveTasksToSocket($result);
         return json_encode($result);
     }
 
@@ -84,6 +95,17 @@ class PersonalListController extends Controller
             ],
         ];
     }
+
+    public function sendSortCountOfActiveTasksToSocket($array) {
+        $response = Http::post('http://localhost:3001/api/send-new-sort-lists-count', [
+            'room' => 'sort_lists_count',
+            'message' => $array
+        ]);
+        return $response->json();
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     private function personalList($id_list, $isDone) : object {
         return Task::where('id_list', $id_list)
