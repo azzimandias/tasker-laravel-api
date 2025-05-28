@@ -38,7 +38,7 @@ class PersonalListController extends Controller
 
     public function sendPersonalCountOfActiveTasksToSocket($object) {
         $response = Http::post('http://localhost:3001/api/send-new-personal-lists-count', [
-            'room' => 'personal_lists_count',
+            'room' => 'bigMenuStore',
             'message' => $object->toArray()
         ]);
         return $response->json();
@@ -98,7 +98,7 @@ class PersonalListController extends Controller
 
     public function sendSortCountOfActiveTasksToSocket($array) {
         $response = Http::post('http://localhost:3001/api/send-new-sort-lists-count', [
-            'room' => 'sort_lists_count',
+            'room' => 'bigMenuStore',
             'message' => $array
         ]);
         return $response->json();

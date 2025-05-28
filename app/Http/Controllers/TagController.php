@@ -8,6 +8,7 @@ use App\Models\Tag_Task;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class TagController extends Controller
 {
@@ -21,7 +22,16 @@ class TagController extends Controller
             ->where('users.id', $_GET['user_id'])
             ->groupBy('tags.id')
             ->get();
+        $this->sendPersonalTagsToSocket($response);
         return json_encode($response);
+    }
+
+    public function sendPersonalTagsToSocket($array) {
+        $response = Http::post('http://localhost:3001/api/send-new-personal-tags', [
+            'room' => 'bigMenuStore',
+            'message' => $array
+        ]);
+        return $response->json();
     }
 
     public function taggedTasks() : string {
