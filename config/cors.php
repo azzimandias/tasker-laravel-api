@@ -17,9 +17,9 @@ return [
 
     'paths' => ['*'],
 
-    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'https://spa.taskerlaravelapi.ru')],
+    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:8080')],
 
     'allowed_origins_patterns' => [],
 

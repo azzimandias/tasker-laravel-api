@@ -20,7 +20,6 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): Response
     {
-
         $request->validate([
             'name' => ['nullable', 'string', 'max:50'],
             'surname' => ['nullable', 'string', 'max:50'],
