@@ -27,7 +27,7 @@ class TagController extends Controller
     }
 
     public function sendPersonalTagsToSocket($array) {
-        $response = Http::post('http://localhost:3001/api/send-new-personal-tags', [
+        $response = Http::post(env('WEBSOCKET').'api/send-new-personal-tags', [
             'room' => 'bigMenuStore',
             'message' => $array
         ]);

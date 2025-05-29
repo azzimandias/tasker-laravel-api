@@ -37,7 +37,7 @@ class PersonalListController extends Controller
     }
 
     public function sendPersonalCountOfActiveTasksToSocket($object) {
-        $response = Http::post('http://localhost:3001/api/send-new-personal-lists-count', [
+        $response = Http::post(env('WEBSOCKET').'api/send-new-personal-lists-count', [
             'room' => 'bigMenuStore',
             'message' => $object->toArray()
         ]);
@@ -97,7 +97,7 @@ class PersonalListController extends Controller
     }
 
     public function sendSortCountOfActiveTasksToSocket($array) {
-        $response = Http::post('http://localhost:3001/api/send-new-sort-lists-count', [
+        $response = Http::post(env('WEBSOCKET').'api/send-new-sort-lists-count', [
             'room' => 'bigMenuStore',
             'message' => $array
         ]);
@@ -285,11 +285,10 @@ class PersonalListController extends Controller
         $list->delete();
     }
 
-    public function updateList() : void {
+    public function updateList(Personal_list $list) : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
 
-        $list = Personal_list::find($body->id);
         if (isset($body->color)) {
             $list->color = $body->color;
         }
@@ -297,5 +296,23 @@ class PersonalListController extends Controller
             $list->name = $body->name;
         }
         $list->save();
+        $this->sendListUpdateToSocket($list);
+    }
+
+    /**
+     * Отправка уведомления об обновлении списка
+     */
+    protected function sendListUpdateToSocket(Personal_list $list): void
+    {
+        Http::post(env('WEBSOCKET').'api/updates-on-list', [
+            'action' => 'update_list',
+            'listId' => $list->id,
+            'list' => [
+                'key' => mt_rand(),
+                'id' => $list->id,
+                'name' => $list->name,
+                'color' => $list->color,
+            ]
+        ]);
     }
 }

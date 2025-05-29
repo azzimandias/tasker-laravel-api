@@ -88,8 +88,8 @@ class TaskController extends Controller
     {
         $taskData = $this->fullTask($task);
 
-        Http::post('http://localhost:3001/api/task-updates', [
-            'action' => 'update',
+        Http::post(env('WEBSOCKET').'api/updates-on-list', [
+            'action' => 'update_task',
             'listId' => $task->id_list,
             'task' => $taskData
         ]);
@@ -102,8 +102,8 @@ class TaskController extends Controller
     {
         $taskData = $this->fullTask($task);
 
-        Http::post('http://localhost:3001/api/task-updates', [
-            'action' => 'create',
+        Http::post(env('WEBSOCKET').'api/updates-on-list', [
+            'action' => 'create_task',
             'listId' => $task->id_list,
             'taskId' => $taskData
         ]);
@@ -114,8 +114,8 @@ class TaskController extends Controller
      */
     protected function sendTaskDeleteToSocket(Task $task): void
     {
-        Http::post('http://localhost:3001/api/task-updates', [
-            'action' => 'delete',
+        Http::post(env('WEBSOCKET').'api/updates-on-list', [
+            'action' => 'delete_task',
             'listId' => $task->id_list,
             'taskId' => $task->id
         ]);

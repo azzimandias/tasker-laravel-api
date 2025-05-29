@@ -31,12 +31,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/list', 'personalListTasks');
         Route::post('/saveList', 'saveList');
         Route::post('/deleteList', 'deleteList');
-        Route::post('/updateList', 'updateList');
+        Route::post('/updateList/{list:id}', 'updateList');
     });
 
     Route::controller(TaskController::class)->group(function() {
         Route::post('/createTask', 'createTask');
-        Route::post('/updateTask/{task}', 'updateTask');
+        Route::post('/updateTask/{task:id}', 'updateTask');
         Route::post('/deleteTask', 'deleteTask');
         Route::post('/globalSearch', 'globalSearch');
     });
