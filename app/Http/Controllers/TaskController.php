@@ -16,11 +16,10 @@ class TaskController extends Controller
         return response()->json($response);
     }
 
-    public function updateTask(): void
+    public function updateTask(Task $task): void
     {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
-        $task = Task::find($body->id);
 
         switch ($body->name) {
             case 'name':
@@ -33,16 +32,14 @@ class TaskController extends Controller
                 $task->deadline = $body->value;
                 break;
             case 'is_flagged':
-                $task->is_flagged = $body->value;
+                $task->is_flagged = $body->value ? 1 : 0;
                 break;
             case 'is_done':
-                $task->is_done = $body->value;
+                $task->is_done = $body->value ? 1 : 0;
                 break;
         }
 
         $task->save();
-
-        // Отправляем уведомление о изменении задачи
         $this->sendTaskUpdateToSocket($task);
     }
 
@@ -89,27 +86,7 @@ class TaskController extends Controller
      */
     protected function sendTaskUpdateToSocket(Task $task): void
     {
-        // Загружаем связанные данные
-        $task->load(['tags' => function($query) {
-            $query->whereNull('tag_task.deleted_at');
-        }]);
-
-        // Получаем possibleTags (теги, которые можно добавить)
-        $usedTagIds = $task->tags->pluck('id')->toArray();
-        $possibleTags = Tag::whereNotIn('id', $usedTagIds)->get();
-
-        // Формируем полные данные задачи
-        $taskData = [
-            'id' => $task->id,
-            'name' => $task->name,
-            'id_list' => $task->id_list,
-            'is_done' => $task->is_done,
-            'is_flagged' => $task->is_flagged,
-            'description' => $task->description,
-            'deadline' => $task->deadline,
-            'tags' => $task->tags,
-            'possibleTags' => $possibleTags,
-        ];
+        $taskData = $this->fullTask($task);
 
         Http::post('http://localhost:3001/api/task-updates', [
             'action' => 'update',
@@ -123,10 +100,12 @@ class TaskController extends Controller
      */
     protected function sendTaskCreateToSocket(Task $task): void
     {
+        $taskData = $this->fullTask($task);
+
         Http::post('http://localhost:3001/api/task-updates', [
             'action' => 'create',
             'listId' => $task->id_list,
-            'taskId' => $task->fresh()->toArray()
+            'taskId' => $taskData
         ]);
     }
 
@@ -140,5 +119,31 @@ class TaskController extends Controller
             'listId' => $task->id_list,
             'taskId' => $task->id
         ]);
+    }
+
+    protected function fullTask(Task $task): array
+    {
+        // Загружаем связанные данные
+        $task->load(['tags' => function($query) {
+            $query->whereNull('tag_task.deleted_at');
+        }]);
+
+        // Получаем possibleTags (теги, которые можно добавить)
+        $usedTagIds = $task->tags->pluck('id')->toArray();
+        $possibleTags = Tag::whereNotIn('id', $usedTagIds)->get();
+
+        // Формируем полные данные задачи
+        return [
+            'key' => mt_rand(),
+            'id' => $task->id,
+            'name' => $task->name,
+            'id_list' => $task->id_list,
+            'is_done' => $task->is_done,
+            'is_flagged' => $task->is_flagged,
+            'description' => $task->description,
+            'deadline' => $task->deadline,
+            'tags' => $task->tags,
+            'possibleTags' => $possibleTags,
+        ];
     }
 }
