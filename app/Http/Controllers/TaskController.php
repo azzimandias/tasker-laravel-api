@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tag;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use JetBrains\PhpStorm\NoReturn;
 
 class TaskController extends Controller
@@ -40,7 +42,9 @@ class TaskController extends Controller
         }
 
         $task->save();
-        $this->sendTaskUpdateToSocket($task);
+        if ($this->isWebSocketAvailable()) {
+            $this->sendTaskUpdateToSocket($task);
+        }
     }
 
     public function createTask(): string
@@ -53,8 +57,9 @@ class TaskController extends Controller
         $task->save();
 
         // Отправляем уведомление о новой задаче
-        $this->sendTaskCreateToSocket($task);
-
+        if ($this->isWebSocketAvailable()) {
+            $this->sendTaskCreateToSocket($task);
+        }
         return json_encode($task);
     }
 
@@ -65,7 +70,9 @@ class TaskController extends Controller
         $task = Task::find($body->id);
 
         // Отправляем уведомление перед удалением
-        $this->sendTaskDeleteToSocket($task);
+        if ($this->isWebSocketAvailable()) {
+            $this->sendTaskDeleteToSocket($task);
+        }
 
         $task->delete();
     }
@@ -88,11 +95,15 @@ class TaskController extends Controller
     {
         $taskData = $this->fullTask($task);
 
-        Http::post(env('WEBSOCKET').'api/updates-on-list', [
-            'action' => 'update_task',
-            'listId' => $task->id_list,
-            'task' => $taskData
-        ]);
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'action' => 'update_task',
+                'listId' => $task->id_list,
+                'task' => $taskData
+            ]);
+        } catch (RequestException $e) {
+            Log::error('Failed to send update to WebSocket');
+        }
     }
 
     /**
@@ -102,11 +113,15 @@ class TaskController extends Controller
     {
         $taskData = $this->fullTask($task);
 
-        Http::post(env('WEBSOCKET').'api/updates-on-list', [
-            'action' => 'create_task',
-            'listId' => $task->id_list,
-            'taskId' => $taskData
-        ]);
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'action' => 'create_task',
+                'listId' => $task->id_list,
+                'taskId' => $taskData
+            ]);
+        } catch (RequestException $e) {
+            Log::error('Failed to send update to WebSocket');
+        }
     }
 
     /**
@@ -114,11 +129,15 @@ class TaskController extends Controller
      */
     protected function sendTaskDeleteToSocket(Task $task): void
     {
-        Http::post(env('WEBSOCKET').'api/updates-on-list', [
-            'action' => 'delete_task',
-            'listId' => $task->id_list,
-            'taskId' => $task->id
-        ]);
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'action' => 'delete_task',
+                'listId' => $task->id_list,
+                'taskId' => $task->id
+            ]);
+        } catch (RequestException $e) {
+            Log::error('Failed to send update to WebSocket');
+        }
     }
 
     protected function fullTask(Task $task): array
@@ -145,5 +164,14 @@ class TaskController extends Controller
             'tags' => $task->tags,
             'possibleTags' => $possibleTags,
         ];
+    }
+
+    public function isWebSocketAvailable(): bool
+    {
+        try {
+            return Http::get(env('WEBSOCKET').'health')->ok();
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }
