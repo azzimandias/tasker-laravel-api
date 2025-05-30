@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use App\Models\Task;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use App\Models\Personal_list;
 use App\Models\User_List;
 use App\Models\Tag_Task;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use JetBrains\PhpStorm\NoReturn;
 
 class PersonalListController extends Controller
@@ -19,7 +21,9 @@ class PersonalListController extends Controller
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id',$_GET['user_id'])
             ->get();
-        $this->sendPersonalCountOfActiveTasksToSocket($response);
+        if ($this->isWebSocketAvailable()) {
+            $this->sendPersonalCountOfActiveTasksToSocket($response);
+        }
         return json_encode($response);
     }
 
@@ -37,18 +41,25 @@ class PersonalListController extends Controller
     }
 
     public function sendPersonalCountOfActiveTasksToSocket($object) {
-        $response = Http::post(env('WEBSOCKET').'api/send-new-personal-lists-count', [
-            'room' => 'bigMenuStore',
-            'message' => $object->toArray()
-        ]);
-        return $response->json();
+        try {
+            $response = Http::post(env('WEBSOCKET').'api/send-new-personal-lists-count', [
+                'room' => 'bigMenuStore',
+                'message' => $object->toArray()
+            ]);
+            return $response->json();
+        } catch (RequestException $e) {
+            Log::error('Failed to send update to WebSocket');
+        }
+        return '';
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public function sortLists() : string {
         $result = $this->updateSortCountOfActiveTasks();
-        $this->sendSortCountOfActiveTasksToSocket($result);
+        if ($this->isWebSocketAvailable()) {
+            $this->sendSortCountOfActiveTasksToSocket($result);
+        }
         return json_encode($result);
     }
 
@@ -97,11 +108,16 @@ class PersonalListController extends Controller
     }
 
     public function sendSortCountOfActiveTasksToSocket($array) {
-        $response = Http::post(env('WEBSOCKET').'api/send-new-sort-lists-count', [
-            'room' => 'bigMenuStore',
-            'message' => $array
-        ]);
-        return $response->json();
+        try {
+            $response = Http::post(env('WEBSOCKET').'api/send-new-sort-lists-count', [
+                'room' => 'bigMenuStore',
+                'message' => $array
+            ]);
+            return $response->json();
+        } catch (RequestException $e) {
+            Log::error('Failed to send update to WebSocket');
+        }
+        return '';
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -296,7 +312,10 @@ class PersonalListController extends Controller
             $list->name = $body->name;
         }
         $list->save();
-        $this->sendListUpdateToSocket($list);
+
+        if ($this->isWebSocketAvailable()) {
+            $this->sendListUpdateToSocket($list);
+        }
     }
 
     /**
@@ -304,15 +323,27 @@ class PersonalListController extends Controller
      */
     protected function sendListUpdateToSocket(Personal_list $list): void
     {
-        Http::post(env('WEBSOCKET').'api/updates-on-list', [
-            'action' => 'update_list',
-            'listId' => $list->id,
-            'list' => [
-                'key' => mt_rand(),
-                'id' => $list->id,
-                'name' => $list->name,
-                'color' => $list->color,
-            ]
-        ]);
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'action' => 'update_list',
+                'listId' => $list->id,
+                'list' => [
+                    'key' => mt_rand(),
+                    'id' => $list->id,
+                    'name' => $list->name,
+                    'color' => $list->color,
+                ]
+            ]);
+        } catch (RequestException $e) {
+            Log::error('Failed to send update to WebSocket');
+        }
+    }
+    public function isWebSocketAvailable(): bool
+    {
+        try {
+            return Http::get(env('WEBSOCKET').'health')->ok();
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

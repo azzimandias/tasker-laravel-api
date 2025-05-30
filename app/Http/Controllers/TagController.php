@@ -7,8 +7,10 @@ use App\Models\Tag;
 use App\Models\Tag_Task;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TagController extends Controller
 {
@@ -22,16 +24,32 @@ class TagController extends Controller
             ->where('users.id', $_GET['user_id'])
             ->groupBy('tags.id')
             ->get();
-        $this->sendPersonalTagsToSocket($response);
+        if ($this->isWebSocketAvailable()) {
+            $this->sendPersonalTagsToSocket($response);
+        }
         return json_encode($response);
     }
 
     public function sendPersonalTagsToSocket($array) {
-        $response = Http::post(env('WEBSOCKET').'api/send-new-personal-tags', [
-            'room' => 'bigMenuStore',
-            'message' => $array
-        ]);
-        return $response->json();
+        try {
+            $response = Http::post(env('WEBSOCKET').'api/send-new-personal-tags', [
+                'room' => 'bigMenuStore',
+                'message' => $array
+            ]);
+            return $response->json();
+        } catch (RequestException $e) {
+            Log::error('Failed to send update to WebSocket');
+        }
+        return '';
+    }
+
+    public function isWebSocketAvailable(): bool
+    {
+        try {
+            return Http::get(env('WEBSOCKET').'health')->ok();
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function taggedTasks() : string {
