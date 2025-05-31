@@ -28,15 +28,15 @@ class TagController extends Controller
         return json_encode($response);
     }
 
-    public function sendPersonalTagsToSocket($array) {
+    public function sendPersonalTagsToSocket($array): void
+    {
         try {
-            $response = Http::post(env('WEBSOCKET').'api/send-new-personal-tags', [
+            Http::post(env('WEBSOCKET').'api/send-new-personal-tags', [
                 'room' => 'bigMenuStore',
                 'message' => $array
             ]);
-            return $response->json();
-        } catch (RequestException $e) {
-            Log::error('Failed to send update to WebSocket');
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
         }
     }
 

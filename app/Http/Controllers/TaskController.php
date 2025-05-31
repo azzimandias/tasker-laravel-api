@@ -90,8 +90,8 @@ class TaskController extends Controller
                 'listId' => $task->id_list,
                 'task' => $taskData
             ]);
-        } catch (RequestException $e) {
-            Log::error('Failed to send update to WebSocket');
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
         }
     }
 
@@ -108,8 +108,8 @@ class TaskController extends Controller
                 'listId' => $task->id_list,
                 'taskId' => $taskData
             ]);
-        } catch (RequestException $e) {
-            Log::error('Failed to send update to WebSocket');
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
         }
     }
 
@@ -124,8 +124,8 @@ class TaskController extends Controller
                 'listId' => $task->id_list,
                 'taskId' => $task->id
             ]);
-        } catch (RequestException $e) {
-            Log::error('Failed to send update to WebSocket');
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
         }
     }
 

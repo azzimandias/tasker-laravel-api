@@ -38,15 +38,15 @@ class PersonalListController extends Controller
         }
     }
 
-    public function sendPersonalCountOfActiveTasksToSocket($object) {
+    public function sendPersonalCountOfActiveTasksToSocket($object): void
+    {
         try {
             $response = Http::post(env('WEBSOCKET').'api/send-new-personal-lists-count', [
                 'room' => 'bigMenuStore',
                 'message' => $object->toArray()
             ]);
-            return $response->json();
-        } catch (RequestException $e) {
-            Log::error('Failed to send update to WebSocket');
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
         }
     }
 
@@ -102,15 +102,15 @@ class PersonalListController extends Controller
         ];
     }
 
-    public function sendSortCountOfActiveTasksToSocket($array) {
+    public function sendSortCountOfActiveTasksToSocket($array): void
+    {
         try {
             $response = Http::post(env('WEBSOCKET').'api/send-new-sort-lists-count', [
                 'room' => 'bigMenuStore',
                 'message' => $array
             ]);
-            return $response->json();
-        } catch (RequestException $e) {
-            Log::error('Failed to send update to WebSocket');
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
         }
     }
 
