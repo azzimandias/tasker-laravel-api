@@ -38,7 +38,6 @@ class TagController extends Controller
         } catch (RequestException $e) {
             Log::error('Failed to send update to WebSocket');
         }
-        return '';
     }
 
     public function taggedTasks() : string {

@@ -48,7 +48,6 @@ class PersonalListController extends Controller
         } catch (RequestException $e) {
             Log::error('Failed to send update to WebSocket');
         }
-        return '';
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +112,6 @@ class PersonalListController extends Controller
         } catch (RequestException $e) {
             Log::error('Failed to send update to WebSocket');
         }
-        return '';
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
