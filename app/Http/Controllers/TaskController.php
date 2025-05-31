@@ -42,9 +42,7 @@ class TaskController extends Controller
         }
 
         $task->save();
-        if ($this->isWebSocketAvailable()) {
-            $this->sendTaskUpdateToSocket($task);
-        }
+        $this->sendTaskUpdateToSocket($task);
     }
 
     public function createTask(): string
@@ -55,11 +53,7 @@ class TaskController extends Controller
         $task->name = $body->name;
         $task->id_list = $body->id_list;
         $task->save();
-
-        // Отправляем уведомление о новой задаче
-        if ($this->isWebSocketAvailable()) {
-            $this->sendTaskCreateToSocket($task);
-        }
+        $this->sendTaskCreateToSocket($task);
         return json_encode($task);
     }
 
@@ -68,12 +62,7 @@ class TaskController extends Controller
         $body = file_get_contents('php://input');
         $body = json_decode($body);
         $task = Task::find($body->id);
-
-        // Отправляем уведомление перед удалением
-        if ($this->isWebSocketAvailable()) {
-            $this->sendTaskDeleteToSocket($task);
-        }
-
+        $this->sendTaskDeleteToSocket($task);
         $task->delete();
     }
 
@@ -164,14 +153,5 @@ class TaskController extends Controller
             'tags' => $task->tags,
             'possibleTags' => $possibleTags,
         ];
-    }
-
-    public function isWebSocketAvailable(): bool
-    {
-        try {
-            return Http::get(env('WEBSOCKET').'health')->ok();
-        } catch (\Exception $e) {
-            return false;
-        }
     }
 }

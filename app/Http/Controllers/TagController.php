@@ -24,9 +24,7 @@ class TagController extends Controller
             ->where('users.id', $_GET['user_id'])
             ->groupBy('tags.id')
             ->get();
-        if ($this->isWebSocketAvailable()) {
-            $this->sendPersonalTagsToSocket($response);
-        }
+        $this->sendPersonalTagsToSocket($response);
         return json_encode($response);
     }
 
@@ -41,15 +39,6 @@ class TagController extends Controller
             Log::error('Failed to send update to WebSocket');
         }
         return '';
-    }
-
-    public function isWebSocketAvailable(): bool
-    {
-        try {
-            return Http::get(env('WEBSOCKET').'health')->ok();
-        } catch (\Exception $e) {
-            return false;
-        }
     }
 
     public function taggedTasks() : string {

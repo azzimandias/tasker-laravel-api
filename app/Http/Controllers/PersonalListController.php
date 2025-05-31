@@ -21,9 +21,7 @@ class PersonalListController extends Controller
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id',$_GET['user_id'])
             ->get();
-        if ($this->isWebSocketAvailable()) {
-            $this->sendPersonalCountOfActiveTasksToSocket($response);
-        }
+        $this->sendPersonalCountOfActiveTasksToSocket($response);
         return json_encode($response);
     }
 
@@ -57,9 +55,7 @@ class PersonalListController extends Controller
 
     public function sortLists() : string {
         $result = $this->updateSortCountOfActiveTasks();
-        if ($this->isWebSocketAvailable()) {
-            $this->sendSortCountOfActiveTasksToSocket($result);
-        }
+        $this->sendSortCountOfActiveTasksToSocket($result);
         return json_encode($result);
     }
 
@@ -312,10 +308,7 @@ class PersonalListController extends Controller
             $list->name = $body->name;
         }
         $list->save();
-
-        if ($this->isWebSocketAvailable()) {
-            $this->sendListUpdateToSocket($list);
-        }
+        $this->sendListUpdateToSocket($list);
     }
 
     /**
@@ -336,14 +329,6 @@ class PersonalListController extends Controller
             ]);
         } catch (RequestException $e) {
             Log::error('Failed to send update to WebSocket');
-        }
-    }
-    public function isWebSocketAvailable(): bool
-    {
-        try {
-            return Http::get(env('WEBSOCKET').'health')->ok();
-        } catch (\Exception $e) {
-            return false;
         }
     }
 }
