@@ -24,16 +24,17 @@ class TagController extends Controller
             ->where('users.id', $_GET['user_id'])
             ->groupBy('tags.id')
             ->get();
-        $this->sendPersonalTagsToSocket($response);
+        $this->sendPersonalTagsToSocket($response, $_GET['uuid']);
         return json_encode($response);
     }
 
-    public function sendPersonalTagsToSocket($array): void
+    public function sendPersonalTagsToSocket($array, $uuid): void
     {
         try {
             Http::post(env('WEBSOCKET').'api/send-new-personal-tags', [
                 'room' => 'bigMenuStore',
-                'message' => $array
+                'message' => $array,
+                'uuid' => $uuid
             ]);
         } catch (\Throwable $e) {
             Log::error('WebSocket failed: ' . $e->getMessage());

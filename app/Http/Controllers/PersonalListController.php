@@ -21,7 +21,7 @@ class PersonalListController extends Controller
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id',$_GET['user_id'])
             ->get();
-        $this->sendPersonalCountOfActiveTasksToSocket($response);
+        $this->sendPersonalCountOfActiveTasksToSocket($response, $_GET['uuid']);
         return json_encode($response);
     }
 
@@ -38,12 +38,13 @@ class PersonalListController extends Controller
         }
     }
 
-    public function sendPersonalCountOfActiveTasksToSocket($object): void
+    public function sendPersonalCountOfActiveTasksToSocket($object, $uuid): void
     {
         try {
             $response = Http::post(env('WEBSOCKET').'api/send-new-personal-lists-count', [
                 'room' => 'bigMenuStore',
-                'message' => $object->toArray()
+                'message' => $object->toArray(),
+                'uuid' => $uuid
             ]);
         } catch (\Throwable $e) {
             Log::error('WebSocket failed: ' . $e->getMessage());
@@ -54,7 +55,7 @@ class PersonalListController extends Controller
 
     public function sortLists() : string {
         $result = $this->updateSortCountOfActiveTasks();
-        $this->sendSortCountOfActiveTasksToSocket($result);
+        $this->sendSortCountOfActiveTasksToSocket($result, $_GET['uuid']);
         return json_encode($result);
     }
 
@@ -102,12 +103,13 @@ class PersonalListController extends Controller
         ];
     }
 
-    public function sendSortCountOfActiveTasksToSocket($array): void
+    public function sendSortCountOfActiveTasksToSocket($array, $uuid): void
     {
         try {
             $response = Http::post(env('WEBSOCKET').'api/send-new-sort-lists-count', [
                 'room' => 'bigMenuStore',
-                'message' => $array
+                'message' => $array,
+                'uuid' => $uuid
             ]);
         } catch (\Throwable $e) {
             Log::error('WebSocket failed: ' . $e->getMessage());
@@ -298,21 +300,22 @@ class PersonalListController extends Controller
     public function updateList(Personal_list $list) : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+        $upd_list = $body->list;
 
-        if (isset($body->color)) {
-            $list->color = $body->color;
+        if (isset($upd_list->color)) {
+            $list->color = $upd_list->color;
         }
-        if (isset($body->name)) {
-            $list->name = $body->name;
+        if (isset($upd_list->name)) {
+            $list->name = $upd_list->name;
         }
         $list->save();
-        $this->sendListUpdateToSocket($list);
+        $this->sendListUpdateToSocket($list, $body->uuid);
     }
 
     /**
      * Отправка уведомления об обновлении списка
      */
-    protected function sendListUpdateToSocket(Personal_list $list): void
+    protected function sendListUpdateToSocket(Personal_list $list, $uuid): void
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
@@ -323,7 +326,8 @@ class PersonalListController extends Controller
                     'id' => $list->id,
                     'name' => $list->name,
                     'color' => $list->color,
-                ]
+                ],
+                'uuid' => $uuid
             ]);
         } catch (RequestException $e) {
             Log::error('Failed to send update to WebSocket');

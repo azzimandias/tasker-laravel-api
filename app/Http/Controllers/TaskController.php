@@ -22,38 +22,40 @@ class TaskController extends Controller
     {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+        $updTask = $body->task;
 
-        switch ($body->name) {
+        switch ($updTask->name) {
             case 'name':
-                $task->name = $body->value;
+                $task->name = $updTask->value;
                 break;
             case 'description':
-                $task->description = $body->value;
+                $task->description = $updTask->value;
                 break;
             case 'deadline':
-                $task->deadline = $body->value;
+                $task->deadline = $updTask->value;
                 break;
             case 'is_flagged':
-                $task->is_flagged = $body->value ? 1 : 0;
+                $task->is_flagged = $updTask->value ? 1 : 0;
                 break;
             case 'is_done':
-                $task->is_done = $body->value ? 1 : 0;
+                $task->is_done = $updTask->value ? 1 : 0;
                 break;
         }
 
         $task->save();
-        $this->sendTaskUpdateToSocket($task);
+        $this->sendTaskUpdateToSocket($task, $body->uuid);
     }
 
     public function createTask(): string
     {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+        $new_task = $body->task;
         $task = new Task;
-        $task->name = $body->name;
-        $task->id_list = $body->id_list;
+        $task->name = $new_task->name;
+        $task->id_list = $new_task->id_list;
         $task->save();
-        $this->sendTaskCreateToSocket($task);
+        $this->sendTaskCreateToSocket($task, $body->uuid);
         return json_encode($task);
     }
 
@@ -62,7 +64,7 @@ class TaskController extends Controller
         $body = file_get_contents('php://input');
         $body = json_decode($body);
         $task = Task::find($body->id);
-        $this->sendTaskDeleteToSocket($task);
+        $this->sendTaskDeleteToSocket($task, $body->uuid);
         $task->delete();
     }
 
@@ -80,7 +82,7 @@ class TaskController extends Controller
     /**
      * Отправка обновления задачи через WebSocket
      */
-    protected function sendTaskUpdateToSocket(Task $task): void
+    protected function sendTaskUpdateToSocket(Task $task, $uuid): void
     {
         $taskData = $this->fullTask($task);
 
@@ -88,7 +90,8 @@ class TaskController extends Controller
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
                 'action' => 'update_task',
                 'listId' => $task->id_list,
-                'task' => $taskData
+                'task' => $taskData,
+                'uuid' => $uuid,
             ]);
         } catch (\Throwable $e) {
             Log::error('WebSocket failed: ' . $e->getMessage());
@@ -98,7 +101,7 @@ class TaskController extends Controller
     /**
      * Отправка уведомления об создании задачи
      */
-    protected function sendTaskCreateToSocket(Task $task): void
+    protected function sendTaskCreateToSocket(Task $task, $uuid): void
     {
         $taskData = $this->fullTask($task);
 
@@ -106,7 +109,8 @@ class TaskController extends Controller
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
                 'action' => 'create_task',
                 'listId' => $task->id_list,
-                'taskId' => $taskData
+                'task' => $taskData,
+                'uuid' => $uuid,
             ]);
         } catch (\Throwable $e) {
             Log::error('WebSocket failed: ' . $e->getMessage());
@@ -116,13 +120,14 @@ class TaskController extends Controller
     /**
      * Отправка уведомления об удалении задачи
      */
-    protected function sendTaskDeleteToSocket(Task $task): void
+    protected function sendTaskDeleteToSocket(Task $task, $uuid): void
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
                 'action' => 'delete_task',
                 'listId' => $task->id_list,
-                'taskId' => $task->id
+                'taskId' => $task->id,
+                'uuid' => $uuid,
             ]);
         } catch (\Throwable $e) {
             Log::error('WebSocket failed: ' . $e->getMessage());
