@@ -121,6 +121,9 @@ class TagController extends Controller
         $tag_task->task_id = $body->task_id;
         $tag_task->save();
 
+        $tag = Tag::find($body->tag_id);
+
+        $this->sendAddTagTaskToSocket($tag, $body->task_id, $body->uuid);
         return json_encode($body);
     }
 
@@ -138,6 +141,7 @@ class TagController extends Controller
         $tag_task->task_id = $body->task_id;
         $tag_task->save();
 
+        $this->sendTagCreateToSocket($tag, $body->task_id, $body->uuid);
         return json_encode($tag);
     }
 
@@ -147,14 +151,85 @@ class TagController extends Controller
         $tag = Tag::find($body->tag_id);
         $tag->name = $body->name;
         $tag->save();
+        $this->sendUpdateTagToSocket($tag, $body->uuid);
         return json_encode($tag);
     }
 
     public function deleteTagTask() : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+        $tag = Tag::find($body->tag_id);
         $tag_task = Tag_Task::where('tag_id', $body->tag_id)
             ->where('task_id', $body->task_id);
+        $this->sendDeleteTagTaskToSocket($tag, $body->task_id, $body->uuid);
         $tag_task->delete();
+    }
+
+    /**
+     * Отправка уведомления об добавлении тега к задаче
+     */
+    protected function sendAddTagTaskToSocket(Tag $tag, $task_id, $uuid): void
+    {
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
+                'action' => 'add_tag_task',
+                'taskId' => $task_id,
+                'tag' => $tag,
+                'uuid' => $uuid,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
+        }
+    }
+    /**
+     * Отправка уведомления об создании тега и добавления его к задаче
+     */
+    protected function sendTagCreateToSocket(Tag $tag, $task_id, $uuid): void
+    {
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
+                'action' => 'create_tag_task',
+                'taskId' => $task_id,
+                'tag' => $tag,
+                'uuid' => $uuid,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
+        }
+    }
+    /**
+     * Отправка уведомления об обновлении тега
+     */
+    protected function sendUpdateTagToSocket(Tag $tag, $uuid): void
+    {
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
+                'action' => 'update_tag',
+                'tag' => $tag,
+                'uuid' => $uuid,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
+        }
+    }
+    /**
+     * Отправка уведомления об удаления тега у задачи
+     */
+    protected function sendDeleteTagTaskToSocket(Tag $tag, $task_id, $uuid): void
+    {
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
+                'action' => 'delete_tag_task',
+                'taskId' => $task_id,
+                'tag' => $tag,
+                'uuid' => $uuid,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
+        }
     }
 }

@@ -88,6 +88,7 @@ class TaskController extends Controller
 
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
                 'action' => 'update_task',
                 'listId' => $task->id_list,
                 'task' => $taskData,
@@ -107,6 +108,7 @@ class TaskController extends Controller
 
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
                 'action' => 'create_task',
                 'listId' => $task->id_list,
                 'task' => $taskData,
@@ -124,6 +126,7 @@ class TaskController extends Controller
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
                 'action' => 'delete_task',
                 'listId' => $task->id_list,
                 'taskId' => $task->id,

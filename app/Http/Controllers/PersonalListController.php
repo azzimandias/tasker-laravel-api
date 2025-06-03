@@ -319,6 +319,7 @@ class PersonalListController extends Controller
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
                 'action' => 'update_list',
                 'listId' => $list->id,
                 'list' => [
