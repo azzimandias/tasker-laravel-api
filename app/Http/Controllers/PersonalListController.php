@@ -323,7 +323,6 @@ class PersonalListController extends Controller
                 'action' => 'update_list',
                 'listId' => $list->id,
                 'list' => [
-                    'key' => mt_rand(),
                     'id' => $list->id,
                     'name' => $list->name,
                     'color' => $list->color,

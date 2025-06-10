@@ -150,7 +150,6 @@ class TaskController extends Controller
 
         // Формируем полные данные задачи
         return [
-            'key' => mt_rand(),
             'id' => $task->id,
             'name' => $task->name,
             'id_list' => $task->id_list,
