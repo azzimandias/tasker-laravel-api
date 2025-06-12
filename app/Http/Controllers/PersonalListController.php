@@ -31,7 +31,7 @@ class PersonalListController extends Controller
             ->where('user_list.user_id',$_GET['user_id'])
             ->get();
         foreach ($personal_lists as $list) {
-            $arr = Task::where('id_list', $list['id'])->get();
+            $arr = Task::where('id_list', $list['id'])->where('is_done', 0)->get();
             $pl = Personal_list::find($list['id']);
             $pl->count_of_active_tasks = count($arr);
             $pl->save();
