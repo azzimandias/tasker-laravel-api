@@ -198,6 +198,7 @@ class PersonalListController extends Controller
     }
 
     public function personalListTasks() : string {
+        $this->updatePersonalCountOfActiveTasks();
         $result = [];
         if(isset($_GET['id'])) {
             $list = Personal_list::find($_GET['id']);

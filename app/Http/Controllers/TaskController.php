@@ -43,6 +43,7 @@ class TaskController extends Controller
         }
 
         $task->save();
+
         $this->sendTaskUpdateToSocket($task, $body->uuid);
     }
 
