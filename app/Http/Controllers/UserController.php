@@ -14,10 +14,10 @@ class UserController extends Controller
     public function updateUserInfo() : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
-        $user = User::find($body->id);
-        $user->email = $body->email;
-        $user->name = $body->name;
-        $user->surname = $body->surname;
+        $user = User::find($body->user_id);
+        $user->email = $body->user_email;
+        $user->name = $body->user_name;
+        $user->surname = $body->user_surname;
         $user->save();
     }
 }
