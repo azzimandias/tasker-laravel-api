@@ -57,7 +57,8 @@ class TaskController extends Controller
         $task->id_list = $new_task->id_list;
         $task->save();
         $this->sendTaskCreateToSocket($task, $body->uuid);
-        return json_encode($task);
+        $newTask = $this->fullTask($task);
+        return json_encode($newTask);
     }
 
     public function deleteTask(): void
