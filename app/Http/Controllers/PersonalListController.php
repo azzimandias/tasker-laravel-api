@@ -276,20 +276,23 @@ class PersonalListController extends Controller
         return json_encode($result);
     }
 
-    public function saveList() : void {
+    public function saveList() : string {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+        $new_list = $body->list;
 
         $list = new Personal_list;
-        $list->name = $body->name;
-        $list->color = $body->color;
+        $list->name = $new_list->name;
+        $list->color = $new_list->color;
         $list->count_of_active_tasks = 0;
         $list->save();
 
         $user_list = new User_List;
-        $user_list->user_id = $body->user_id;
+        $user_list->user_id = $new_list->user_id;
         $user_list->list_id = $list->id;
         $user_list->save();
+
+        return json_encode($list);
     }
 
     public function deleteList() : void {
