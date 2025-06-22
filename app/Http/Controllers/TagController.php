@@ -61,7 +61,7 @@ class TagController extends Controller
                     ->where('tasks.deleted_at', '=', null)
                     ->groupBy('tasks.id')
                     ->get();
-                if ($tasks) {
+                if (count($tasks) > 0) {
                     $tasks = $this->addTagsToTasks($tasks);
                     $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
                 }
@@ -76,7 +76,7 @@ class TagController extends Controller
                     ->where('tasks.deleted_at', '=', null)
                     ->where('tags.id', $idxs)
                     ->get();
-                if ($tasks) {
+                if (count($tasks) > 0) {
                     $tasks = $this->addTagsToTasks($tasks);
                     $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
                 }

@@ -248,25 +248,25 @@ class PersonalListController extends Controller
                 switch ($_GET['name']) {
                     case 'today':
                         $tasks = $this->sortList($pl['id'], 'today');
-                        if ($tasks) {
+                        if (count($tasks) > 0) {
                             $result['tasksByList'][] = ['personal_list' => $pl,'tasks' => $tasks];
                         }
                         break;
                     case 'with_flag':
                         $tasks = $this->sortList($pl['id'], 'with_flag');
-                        if ($tasks) {
+                        if (count($tasks) > 0) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
                     case 'done':
                         $tasks = $this->sortList($pl['id'], 'done');
-                        if ($tasks) {
+                        if (count($tasks) > 0) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
                     case 'all':
                         $tasks = $this->sortList($pl['id']);
-                        if ($tasks) {
+                        if (count($tasks) > 0) {
                             $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
