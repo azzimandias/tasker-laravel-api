@@ -48,5 +48,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/createTag', 'createTag');
         Route::post('/updateTag', 'updateTag');
         Route::post('/deleteTagTask', 'deleteTagTask');
+        Route::post('/deleteTag', 'deleteTag');
     });
 });

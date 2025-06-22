@@ -22,6 +22,7 @@ class TagController extends Controller
             ->join('tag_task', 'tasks.id', '=', 'tag_task.task_id')
             ->join('tags', 'tag_task.tag_id', '=', 'tags.id')
             ->where('users.id', $_GET['user_id'])
+            ->where('tags.deleted_at', null)
             ->groupBy('tags.id')
             ->get();
         $this->sendPersonalTagsToSocket($response, $_GET['uuid']);
@@ -131,15 +132,22 @@ class TagController extends Controller
         $body = file_get_contents('php://input');
         $body = json_decode($body);
 
-        $tag = new Tag;
-        $tag->name = $body->name;
-        $tag->save();
-        $newTagId = $tag->id;
+        $tagM = Tag::where('name', $body->name)->first();
+        if ($tagM) {
+            $newTagId = $tagM->id;
+        } else {
+            $tag = new Tag;
+            $tag->name = $body->name;
+            $tag->save();
+            $newTagId = $tag->id;
+        }
 
-        $tag_task = new Tag_Task;
-        $tag_task->tag_id = $newTagId;
-        $tag_task->task_id = $body->task_id;
-        $tag_task->save();
+        if ($body->task_id) {
+            $tag_task = new Tag_Task;
+            $tag_task->tag_id = $newTagId;
+            $tag_task->task_id = $body->task_id;
+            $tag_task->save();
+        }
 
         $this->sendTagCreateToSocket($tag, $body->task_id, $body->uuid);
         return json_encode($tag);
@@ -165,10 +173,20 @@ class TagController extends Controller
         $tag_task->delete();
     }
 
+    public function deleteTag() : void {
+        $body = file_get_contents('php://input');
+        $body = json_decode($body);
+        $tag = Tag::find($body->id);
+        $tag_task = Tag_Task::where('tag_id', $body->id);
+        $this->sendDeleteTagToSocket($tag, $body->uuid);
+        $tag_task->delete();
+        $tag->delete();
+    }
+
     /**
      * Отправка уведомления об добавлении тега к задаче
      */
-    protected function sendAddTagTaskToSocket(Tag $tag, $task_id, $uuid): void
+    protected function sendAddTagTaskToSocket(Tag $tag, $task_id, $uuid) : void
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
@@ -185,7 +203,7 @@ class TagController extends Controller
     /**
      * Отправка уведомления об создании тега и добавления его к задаче
      */
-    protected function sendTagCreateToSocket(Tag $tag, $task_id, $uuid): void
+    protected function sendTagCreateToSocket(Tag $tag, $task_id, $uuid) : void
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
@@ -202,7 +220,7 @@ class TagController extends Controller
     /**
      * Отправка уведомления об обновлении тега
      */
-    protected function sendUpdateTagToSocket(Tag $tag, $uuid): void
+    protected function sendUpdateTagToSocket(Tag $tag, $uuid) : void
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
@@ -218,13 +236,29 @@ class TagController extends Controller
     /**
      * Отправка уведомления об удаления тега у задачи
      */
-    protected function sendDeleteTagTaskToSocket(Tag $tag, $task_id, $uuid): void
+    protected function sendDeleteTagTaskToSocket(Tag $tag, $task_id, $uuid) : void
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
                 'room' => 'ListViewStore',
                 'action' => 'delete_tag_task',
                 'taskId' => $task_id,
+                'tag' => $tag,
+                'uuid' => $uuid,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('WebSocket failed: ' . $e->getMessage());
+        }
+    }
+    /**
+     * Отправка уведомления об удаления тега
+     */
+    protected function sendDeleteTagToSocket(Tag $tag, $uuid) : void
+    {
+        try {
+            Http::post(env('WEBSOCKET').'api/updates-on-list', [
+                'room' => 'ListViewStore',
+                'action' => 'delete_tag',
                 'tag' => $tag,
                 'uuid' => $uuid,
             ]);
