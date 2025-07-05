@@ -18,7 +18,7 @@ class TaskController extends Controller
         return response()->json($response);
     }
 
-    public function updateTask(Task $task): void
+    public function updateTask(Task $task): string
     {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
@@ -43,8 +43,9 @@ class TaskController extends Controller
         }
 
         $task->save();
-
         $this->sendTaskUpdateToSocket($task, $body->uuid);
+        $fullTask = $this->fullTask($task);
+        return json_encode($fullTask);
     }
 
     public function createTask(): string
