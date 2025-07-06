@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Personal_list;
 use App\Models\User_List;
 use App\Models\Tag_Task;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use JetBrains\PhpStorm\NoReturn;
@@ -335,6 +336,17 @@ class PersonalListController extends Controller
             ]);
         } catch (RequestException $e) {
             Log::error('Failed to send update to WebSocket');
+        }
+    }
+
+    public function updateOwners(): void {
+        $lists = Personal_list::with('users')->get();
+        foreach ($lists as $list) {
+            $user_id = $list->users()->first()?->id;
+            if ($user_id) {
+                $list->id_owner = $user_id;
+                $list->save();
+            }
         }
     }
 }

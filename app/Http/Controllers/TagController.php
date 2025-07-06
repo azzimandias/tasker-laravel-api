@@ -44,8 +44,6 @@ class TagController extends Controller
 
     public function taggedTasks() : string {
         $idxs = null;
-        $tasks = [];
-        $tag = array();
         $tasksByList = [];
         $personal_lists = Personal_list::where('deleted_at', null)->get();
         if(isset($_GET['id'])) { $idxs = $_GET['id']; }
@@ -265,5 +263,9 @@ class TagController extends Controller
         } catch (\Throwable $e) {
             Log::error('WebSocket failed: ' . $e->getMessage());
         }
+    }
+
+    public function createUserTagConnection(): void {
+
     }
 }
