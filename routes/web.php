@@ -12,12 +12,4 @@ Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
 
-Route::controller(PersonalListController::class)->group(function() {
-    Route::get('/updateOwners', 'updateOwners'); // для проставления id_owner после миграции
-});
-
-Route::controller(TagController::class)->group(function() {
-    Route::get('/createUserTagConnection', 'createUserTagConnection'); // для добавления записей в user_tag
-});
-
 require __DIR__.'/auth.php';

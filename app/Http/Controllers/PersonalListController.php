@@ -338,17 +338,4 @@ class PersonalListController extends Controller
             Log::error('Failed to send update to WebSocket');
         }
     }
-
-    public function updateOwners(): void {
-        $lists = PersonalList::with('userlist')->get();
-        print($lists);
-        foreach ($lists as $list) {
-            $user_id = $list->userlist()->first()?->user_id;
-            if ($user_id) {
-                $list->update([
-                    "owner_id" => $user_id
-                ]);
-            }
-        }
-    }
 }

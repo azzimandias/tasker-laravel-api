@@ -265,28 +265,4 @@ class TagController extends Controller
             Log::error('WebSocket failed: ' . $e->getMessage());
         }
     }
-
-    public function createUserTagConnection(): void
-    {
-        $tags = Tag::select('tags.id as tag_id', 'users.id as user_id')
-             ->join('tag_task','tag_task.tag_id','=','tags.id')
-             ->join('tasks', 'tasks.id', '=', 'tag_task.task_id')
-             ->join('personal_lists', 'personal_lists.id', '=', 'tasks.id_list')
-             ->join('user_list', 'user_list.list_id', '=', 'personal_lists.id')
-             ->join('users', 'users.id', '=', 'user_list.user_id')
-             ->groupBy('tags.id', 'users.id')
-             ->get();
-        foreach ($tags as $tag) {
-            DB::table('user_tag')->updateOrInsert(
-                [
-                    'tag_id' => $tag->tag_id,
-                    'user_id' => $tag->user_id
-                ],
-                [
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]
-            );
-        }
-    }
 }
