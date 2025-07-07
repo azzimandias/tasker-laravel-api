@@ -14,6 +14,11 @@ class Task extends Model
     protected $table = 'tasks';
     protected $guarded = false;
 
+    public function personal_list(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(PersonalList::class);
+    }
+
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'tag_task');

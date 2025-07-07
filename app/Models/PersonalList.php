@@ -19,4 +19,9 @@ class PersonalList extends Model
     {
         return $this->hasMany(UserList::class, "list_id", "id");
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_list', 'list_id', 'user_id');
+    }
 }

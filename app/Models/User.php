@@ -48,11 +48,11 @@ class User extends Authenticatable
 
     public function lists(): BelongsToMany
     {
-        return $this->belongsToMany(Personal_list::class, 'user_list');
+        return $this->belongsToMany(PersonalList::class, 'user_list');
     }
 
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class, 'user_tag');
+        return $this->belongsToMany(Tag::class, 'user_tag', 'user_id', 'list_id');
     }
 }
