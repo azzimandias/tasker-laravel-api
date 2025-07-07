@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Task;
-use App\Models\Personal_list;
+use App\Models\PersonalList;
 use App\Models\Tag;
-use App\Models\Tag_Task;
+use App\Models\TagTask;
 use JetBrains\PhpStorm\NoReturn;
 
 class DevController extends Controller
@@ -40,7 +40,7 @@ class DevController extends Controller
             ],
         ];
         foreach ($devLists as $list) {
-            Personal_list::create([
+            PersonalList::create([
                 'name' => $list['name'],
                 'count_of_active_tasks' => $list['count_of_active_tasks'],
                 'color' => $list['color'],
@@ -271,7 +271,7 @@ class DevController extends Controller
             ],
         ];
         foreach ($devTaskTags as $tasktag) {
-            Tag_Task::create([
+            TagTask::create([
                 'task_id' => $tasktag['id_task'],
                 'tag_id' => $tasktag['id_tag'],
             ]);

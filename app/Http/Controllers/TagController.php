@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Personal_list;
+use App\Models\PersonalList;
 use App\Models\Tag;
-use App\Models\Tag_Task;
+use App\Models\TagTask;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Client\RequestException;
@@ -45,7 +45,7 @@ class TagController extends Controller
     public function taggedTasks() : string {
         $idxs = null;
         $tasksByList = [];
-        $personal_lists = Personal_list::where('deleted_at', null)->get();
+        $personal_lists = PersonalList::where('deleted_at', null)->get();
         if(isset($_GET['id'])) { $idxs = $_GET['id']; }
         if((int)$idxs === 0) {
             $tag = array(
@@ -53,7 +53,7 @@ class TagController extends Controller
                 'name' => 'Все теги'
             );
             foreach ($personal_lists as $pl) {
-                $tasks = Tag_Task::select('tasks.*')
+                $tasks = TagTask::select('tasks.*')
                     ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
                     ->where('tasks.id_list', $pl->id)
                     ->where('tag_task.deleted_at', '=', null)
@@ -115,7 +115,7 @@ class TagController extends Controller
         $body = file_get_contents('php://input');
         $body = json_decode($body);
 
-        $tag_task = new Tag_Task;
+        $tag_task = new TagTask;
         $tag_task->tag_id = $body->tag_id;
         $tag_task->task_id = $body->task_id;
         $tag_task->save();
@@ -141,7 +141,7 @@ class TagController extends Controller
         }
 
         if ($body->task_id) {
-            $tag_task = new Tag_Task;
+            $tag_task = new TagTask;
             $tag_task->tag_id = $newTagId;
             $tag_task->task_id = $body->task_id;
             $tag_task->save();
@@ -165,7 +165,7 @@ class TagController extends Controller
         $body = file_get_contents('php://input');
         $body = json_decode($body);
         $tag = Tag::find($body->tag_id);
-        $tag_task = Tag_Task::where('tag_id', $body->tag_id)
+        $tag_task = TagTask::where('tag_id', $body->tag_id)
             ->where('task_id', $body->task_id);
         $this->sendDeleteTagTaskToSocket($tag, $body->task_id, $body->uuid);
         $tag_task->delete();
@@ -175,7 +175,7 @@ class TagController extends Controller
         $body = file_get_contents('php://input');
         $body = json_decode($body);
         $tag = Tag::find($body->id);
-        $tag_task = Tag_Task::where('tag_id', $body->id);
+        $tag_task = TagTask::where('tag_id', $body->id);
         $this->sendDeleteTagToSocket($tag, $body->uuid);
         $tag_task->delete();
         $tag->delete();

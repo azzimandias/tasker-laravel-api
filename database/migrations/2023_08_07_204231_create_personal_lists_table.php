@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('count_of_active_tasks')->default(0);
             $table->string('color');
-            $table->integer('id_owner');
+//            $table->integer('id_owner');
             $table->timestamps();
             $table->softDeletes();
         });

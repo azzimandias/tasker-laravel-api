@@ -6,9 +6,9 @@ use App\Models\Tag;
 use App\Models\Task;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
-use App\Models\Personal_list;
-use App\Models\User_List;
-use App\Models\Tag_Task;
+use App\Models\PersonalList;
+use App\Models\UserList;
+use App\Models\TagTask;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +18,7 @@ class PersonalListController extends Controller
 {
     public function lists() : string {
         $this->updatePersonalCountOfActiveTasks();
-        $response = Personal_list::select('personal_lists.*')
+        $response = PersonalList::select('personal_lists.*')
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id',$_GET['user_id'])
             ->get();
@@ -27,13 +27,13 @@ class PersonalListController extends Controller
     }
 
     private function updatePersonalCountOfActiveTasks() : void {
-        $personal_lists = Personal_list::select('personal_lists.*')
+        $PersonalLists = PersonalList::select('personal_lists.*')
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id',$_GET['user_id'])
             ->get();
-        foreach ($personal_lists as $list) {
+        foreach ($PersonalLists as $list) {
             $arr = Task::where('id_list', $list['id'])->where('is_done', 0)->get();
-            $pl = Personal_list::find($list['id']);
+            $pl = PersonalList::find($list['id']);
             $pl->count_of_active_tasks = count($arr);
             $pl->save();
         }
@@ -148,8 +148,8 @@ class PersonalListController extends Controller
     }
 
     private function sortList($id_list, $case = null) : object {
-        $tasks = Task::select('personal_lists.id as personal_list_id',
-            'personal_lists.name as personal_list_name',
+        $tasks = Task::select('personal_lists.id as personal_lists_id',
+            'personal_lists.name as personal_lists_name',
             'personal_lists.color as color',
             'tasks.id as id',
             'tasks.name as name',
@@ -189,8 +189,8 @@ class PersonalListController extends Controller
                     'is_flagged' => $task->is_flagged,
                     'description' => $task->description,
                     'deadline' => $task->deadline,
-                    'personal_list_id' => $task->personal_list_id,
-                    'personal_list_name' => $task->personal_list_name,
+                    'personal_lists_id' => $task->PersonalList_id,
+                    'personal_lists_name' => $task->PersonalList_name,
                     'color' => $task->color,
                     'tags' => $tags,
                     'possibleTags' => $possibleTags,
@@ -202,12 +202,12 @@ class PersonalListController extends Controller
         $this->updatePersonalCountOfActiveTasks();
         $result = [];
         if(isset($_GET['id'])) {
-            $list = Personal_list::find($_GET['id']);
+            $list = PersonalList::find($_GET['id']);
             $tasks = $this->personalList($_GET['id'], false);
             $tasksDone = $this->personalList($_GET['id'], true);
             $result = ['list'=>$list, 'tasks'=>$tasks, 'tasksDone'=>$tasksDone];
         } elseif (isset($_GET['name'])) {
-            $personal_lists = Personal_list::where('deleted_at', null)->get();
+            $PersonalLists = PersonalList::where('deleted_at', null)->get();
 
             switch ($_GET['name']) {
                 case 'today':
@@ -245,7 +245,7 @@ class PersonalListController extends Controller
             }
             $result['tasksByList'] = [];
 
-            foreach ($personal_lists as $pl) {
+            foreach ($PersonalLists as $pl) {
                 switch ($_GET['name']) {
                     case 'today':
                         $tasks = $this->sortList($pl['id'], 'today');
@@ -282,13 +282,13 @@ class PersonalListController extends Controller
         $body = json_decode($body);
         $new_list = $body->list;
 
-        $list = new Personal_list;
+        $list = new PersonalList;
         $list->name = $new_list->name;
         $list->color = $new_list->color;
         $list->count_of_active_tasks = 0;
         $list->save();
 
-        $user_list = new User_List;
+        $user_list = new UserList;
         $user_list->user_id = $new_list->user_id;
         $user_list->list_id = $list->id;
         $user_list->save();
@@ -298,11 +298,11 @@ class PersonalListController extends Controller
 
     public function deleteList() : void {
         $body = file_get_contents('php://input');
-        $list = Personal_list::find($body);
+        $list = PersonalList::find($body);
         $list->delete();
     }
 
-    public function updateList(Personal_list $list) : void {
+    public function updateList(PersonalList $list) : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
         $upd_list = $body->list;
@@ -320,7 +320,7 @@ class PersonalListController extends Controller
     /**
      * Отправка уведомления об обновлении списка
      */
-    protected function sendListUpdateToSocket(Personal_list $list, $uuid): void
+    protected function sendListUpdateToSocket(PersonalList $list, $uuid): void
     {
         try {
             Http::post(env('WEBSOCKET').'api/updates-on-list', [
@@ -340,12 +340,14 @@ class PersonalListController extends Controller
     }
 
     public function updateOwners(): void {
-        $lists = Personal_list::with('users')->get();
+        $lists = PersonalList::with('userlist')->get();
+        print($lists);
         foreach ($lists as $list) {
-            $user_id = $list->users()->first()?->id;
+            $user_id = $list->userlist()->first()?->user_id;
             if ($user_id) {
-                $list->id_owner = $user_id;
-                $list->save();
+                $list->update([
+                    "owner_id" => $user_id
+                ]);
             }
         }
     }
