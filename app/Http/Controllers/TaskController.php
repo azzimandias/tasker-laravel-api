@@ -6,6 +6,7 @@ use App\Models\Tag;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use App\Models\Task;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use JetBrains\PhpStorm\NoReturn;
@@ -140,7 +141,7 @@ class TaskController extends Controller
         }
     }
 
-    protected function fullTask(Task $task): array
+    public function fullTask(Task $task): array
     {
         // Загружаем связанные данные
         $task->load(['tags' => function($query) {
@@ -149,7 +150,13 @@ class TaskController extends Controller
 
         // Получаем possibleTags (теги, которые можно добавить)
         $usedTagIds = $task->tags->pluck('id')->toArray();
-        $possibleTags = Tag::whereNotIn('id', $usedTagIds)->get();
+        $user = Auth::user();
+        $possibleTags = Tag::whereNull('deleted_at')
+            ->whereHas('users', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->whereNotIn('id', $usedTagIds)
+            ->get();
 
         // Формируем полные данные задачи
         return [
@@ -162,6 +169,7 @@ class TaskController extends Controller
             'deadline' => $task->deadline,
             'tags' => $task->tags,
             'possibleTags' => $possibleTags,
+            'user' => $user->id
         ];
     }
 }

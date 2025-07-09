@@ -9,6 +9,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -36,42 +37,59 @@ class TagController extends Controller
 
     public function taggedTasks(Tag $tag = null): string
     {
-        $allTags = Tag::whereNull('deleted_at')->get()->keyBy('id');
-
+        $user = Auth::user();
+        $allTags = Tag::whereNull('deleted_at')
+            ->whereHas('users', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->get()
+            ->keyBy('id');
         if (!$tag) {
             $tagData = ['id' => 0, 'name' => 'Все теги'];
-            $tasks = Task::has('tags')
-                ->with([
-                    'tags' => function($query) {
-                        $query->whereNull('tags.deleted_at');
-                        $query->whereNull('tag_task.deleted_at');
-                    },
-                    'personal_list'
-                ])
-                ->get();
+            $tasks = Task::whereHas('tags', function($query) use ($user) {
+                $query->whereNull('tags.deleted_at')
+                    ->whereNull('tag_task.deleted_at')
+                    ->whereHas('users', function($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    });
+            })
+            ->with([
+                'tags' => function($query) use ($user) {
+                    $query->whereNull('tags.deleted_at')
+                        ->whereNull('tag_task.deleted_at')
+                        ->whereHas('users', function($q) use ($user) {
+                            $q->where('user_id', $user->id);
+                        });
+                },
+                'personal_list'
+            ])
+            ->get();
         } else {
             $tagData = $tag->only(['id', 'name']);
             $tasks = $tag->tasks()
+                ->wherePivotNull('deleted_at')
+                ->whereHas('tags.users', function($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
                 ->with([
-                    'tags' => function($query) {
-                        $query->whereNull('tags.deleted_at');
-                        $query->whereNull('tag_task.deleted_at');
+                    'tags' => function($query) use ($user) {
+                        $query->whereNull('tags.deleted_at')
+                            ->whereNull('tag_task.deleted_at')
+                            ->whereHas('users', function($q) use ($user) {
+                                $q->where('user_id', $user->id);
+                            });
                     },
                     'personal_list'
                 ])
                 ->get();
         }
-
         $tasksByList = [];
         $processedTaskIds = [];
-
         foreach ($tasks as $task) {
             if (in_array($task->id, $processedTaskIds) || !$task->personal_list) {
                 continue;
             }
-
             $listId = $task->personal_list->id;
-
             if (!isset($tasksByList[$listId])) {
                 $tasksByList[$listId] = [
                     'list' => $task->personal_list,

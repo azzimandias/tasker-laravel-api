@@ -44,6 +44,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(TagController::class)->group(function() {
         Route::get('/tags/{user:id}', 'tags');
         Route::get('/tag/{tag:id}', 'taggedTasks');
+        Route::get('/tag', 'taggedTasks');
         Route::post('/addTagToTask', 'addTagToTask');
         Route::post('/createTag', 'createTag');
         Route::post('/updateTag/{tag:id}', 'updateTag');

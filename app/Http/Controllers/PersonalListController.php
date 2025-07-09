@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\PersonalList;
 use App\Models\UserList;
 use App\Models\TagTask;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -125,25 +126,7 @@ class PersonalListController extends Controller
             ->where('is_done', '=', (int)$isDone)
             ->get()
             ->map(function($task) {
-                $tags = Tag::select('tags.id', 'tags.name')
-                    ->join('tag_task','tags.id','=','tag_task.tag_id')
-                    ->where('tag_task.task_id', '=', $task->id)
-                    ->where('tag_task.deleted_at', '=', null)
-                    ->get();
-                $possibleTags = Tag::select('tags.id', 'tags.name')
-                    ->whereNotIn('tags.id', $tags->pluck('id'))
-                    ->get();
-                return [
-                    'id' => $task->id,
-                    'name' => $task->name,
-                    'id_list' => $task->id_list,
-                    'is_done' => $task->is_done,
-                    'is_flagged' => $task->is_flagged,
-                    'description' => $task->description,
-                    'deadline' => $task->deadline,
-                    'tags' => $tags,
-                    'possibleTags' => $possibleTags,
-                ];
+                return (new TaskController)->fullTask($task);
             });
     }
 
@@ -174,27 +157,7 @@ class PersonalListController extends Controller
                 break;
         }
         return $tasks->get()->map(function($task) {
-                $tags = Tag::select('tags.id', 'tags.name')
-                    ->join('tag_task','tags.id','=','tag_task.tag_id')
-                    ->where('tag_task.task_id', '=', $task->id)
-                    ->where('tag_task.deleted_at', '=', null)
-                    ->get();
-                $possibleTags = Tag::select('tags.id', 'tags.name')
-                    ->whereNotIn('tags.id', $tags->pluck('id'))
-                    ->get();
-                return [
-                    'id' => $task->id,
-                    'name' => $task->name,
-                    'is_done' => $task->is_done,
-                    'is_flagged' => $task->is_flagged,
-                    'description' => $task->description,
-                    'deadline' => $task->deadline,
-                    'personal_lists_id' => $task->PersonalList_id,
-                    'personal_lists_name' => $task->PersonalList_name,
-                    'color' => $task->color,
-                    'tags' => $tags,
-                    'possibleTags' => $possibleTags,
-                ];
+            return (new TaskController)->fullTask($task);;
         });
     }
 
@@ -280,12 +243,14 @@ class PersonalListController extends Controller
     public function saveList() : string {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+        $user = Auth::user();
         $new_list = $body->list;
 
         $list = new PersonalList;
         $list->name = $new_list->name;
         $list->color = $new_list->color;
         $list->count_of_active_tasks = 0;
+        $list->owner_id = $user->id;
         $list->save();
 
         $user_list = new UserList;
