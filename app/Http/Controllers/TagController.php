@@ -7,6 +7,7 @@ use App\Models\Tag;
 use App\Models\TagTask;
 use App\Models\Task;
 use App\Models\User;
+use App\Models\UserTag;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -136,16 +137,17 @@ class TagController extends Controller
     public function createTag() : string {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
+        $user = Auth::user();
 
-        $tagM = Tag::where('name', $body->name)->first();
-        if ($tagM) {
-            $newTagId = $tagM->id;
-        } else {
-            $tag = new Tag;
-            $tag->name = $body->name;
-            $tag->save();
-            $newTagId = $tag->id;
-        }
+        $tag = new Tag;
+        $tag->name = $body->name;
+        $tag->save();
+        $newTagId = $tag->id;
+
+        $user_tag = new UserTag;
+        $user_tag->user_id = $user->id;
+        $user_tag->tag_id = $newTagId;
+        $user_tag->save();
 
         if ($body->task_id) {
             $tag_task = new TagTask;
