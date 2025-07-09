@@ -42,12 +42,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::controller(TagController::class)->group(function() {
-        Route::get('/tags', 'tags');
-        Route::get('/tag', 'taggedTasks');
+        Route::get('/tags/{user:id}', 'tags');
+        Route::get('/tag/{tag:id}', 'taggedTasks');
         Route::post('/addTagToTask', 'addTagToTask');
         Route::post('/createTag', 'createTag');
-        Route::post('/updateTag', 'updateTag');
+        Route::post('/updateTag/{tag:id}', 'updateTag');
         Route::post('/deleteTagTask', 'deleteTagTask');
-        Route::post('/deleteTag', 'deleteTag');
+        Route::post('/deleteTag/{tag:id}', 'deleteTag');
     });
 });

@@ -15,19 +15,10 @@ use Illuminate\Support\Facades\Log;
 
 class TagController extends Controller
 {
-    public function tags() : string {
-        $response = User::select('tags.id as id', 'tags.name as name')
-            ->join('user_list', 'users.id', '=', 'user_list.user_id')
-            ->join('personal_lists', 'user_list.list_id', '=', 'personal_lists.id')
-            ->join('tasks', 'personal_lists.id', '=', 'tasks.id_list')
-            ->join('tag_task', 'tasks.id', '=', 'tag_task.task_id')
-            ->join('tags', 'tag_task.tag_id', '=', 'tags.id')
-            ->where('users.id', $_GET['user_id'])
-            ->where('tags.deleted_at', null)
-            ->groupBy('tags.id')
-            ->get();
-        $this->sendPersonalTagsToSocket($response, $_GET['uuid']);
-        return json_encode($response);
+    public function tags(User $user) : string {
+        $tags = $user->tags;
+        $this->sendPersonalTagsToSocket($tags, $_GET['uuid']);
+        return json_encode($tags);
     }
 
     public function sendPersonalTagsToSocket($array, $uuid): void
@@ -43,73 +34,70 @@ class TagController extends Controller
         }
     }
 
-    public function taggedTasks() : string {
-        $idxs = null;
-        $tasksByList = [];
-        $personal_lists = PersonalList::where('deleted_at', null)->get();
-        if(isset($_GET['id'])) { $idxs = $_GET['id']; }
-        if((int)$idxs === 0) {
-            $tag = array(
-                'id' => 0,
-                'name' => 'Все теги'
-            );
-            foreach ($personal_lists as $pl) {
-                $tasks = TagTask::select('tasks.*')
-                    ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
-                    ->where('tasks.id_list', $pl->id)
-                    ->where('tag_task.deleted_at', '=', null)
-                    ->where('tasks.deleted_at', '=', null)
-                    ->groupBy('tasks.id')
-                    ->get();
-                if (count($tasks) > 0) {
-                    $tasks = $this->addTagsToTasks($tasks);
-                    $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
-                }
-            }
-        } else {
-            $tag = Tag::find($idxs);
-            foreach ($personal_lists as $pl) {
-                $tasks = Tag::join('tag_task', 'tags.id', '=', 'tag_task.tag_id')
-                    ->join('tasks', 'tag_task.task_id', '=', 'tasks.id')
-                    ->where('tasks.id_list', $pl->id)
-                    ->where('tag_task.deleted_at', '=', null)
-                    ->where('tasks.deleted_at', '=', null)
-                    ->where('tags.id', $idxs)
-                    ->get();
-                if (count($tasks) > 0) {
-                    $tasks = $this->addTagsToTasks($tasks);
-                    $tasksByList[] = ['personal_list' => $pl,'tasks' => $tasks];
-                }
-            }
-        }
-        return json_encode(array(
-            'tag' => $tag,
-            'tasksByList' => $tasksByList
-        ));
-    }
+    public function taggedTasks(Tag $tag = null): string
+    {
+        $allTags = Tag::whereNull('deleted_at')->get()->keyBy('id');
 
-    private function addTagsToTasks($tasks) : object {
-        return $tasks->map(function($task) {
-            $tags = Tag::select('tags.id', 'tags.name')
-                ->join('tag_task','tags.id','=','tag_task.tag_id')
-                ->where('tag_task.task_id', '=', $task->id)
-                ->where('tag_task.deleted_at', '=', null)
+        if (!$tag) {
+            $tagData = ['id' => 0, 'name' => 'Все теги'];
+            $tasks = Task::has('tags')
+                ->with([
+                    'tags' => function($query) {
+                        $query->whereNull('tags.deleted_at');
+                        $query->whereNull('tag_task.deleted_at');
+                    },
+                    'personal_list'
+                ])
                 ->get();
-            $possibleTags = Tag::select('tags.id', 'tags.name')
-                ->whereNotIn('tags.id', $tags->pluck('id'))
+        } else {
+            $tagData = $tag->only(['id', 'name']);
+            $tasks = $tag->tasks()
+                ->with([
+                    'tags' => function($query) {
+                        $query->whereNull('tags.deleted_at');
+                        $query->whereNull('tag_task.deleted_at');
+                    },
+                    'personal_list'
+                ])
                 ->get();
-            return [
+        }
+
+        $tasksByList = [];
+        $processedTaskIds = [];
+
+        foreach ($tasks as $task) {
+            if (in_array($task->id, $processedTaskIds) || !$task->personal_list) {
+                continue;
+            }
+
+            $listId = $task->personal_list->id;
+
+            if (!isset($tasksByList[$listId])) {
+                $tasksByList[$listId] = [
+                    'list' => $task->personal_list,
+                    'tasks' => []
+                ];
+            }
+            $uniqueTags = $task->tags->unique('id');
+            $currentTagIds = $uniqueTags->pluck('id')->toArray();
+            $possibleTags = $allTags->except($currentTagIds)->values();
+
+            $tasksByList[$listId]['tasks'][] = [
                 'id' => $task->id,
                 'name' => $task->name,
-                'id_list' => $task->id_list,
+                'description' => $task->description,
                 'is_done' => $task->is_done,
                 'is_flagged' => $task->is_flagged,
-                'description' => $task->description,
                 'deadline' => $task->deadline,
-                'tags' => $tags,
-                'possibleTags' => $possibleTags,
+                'tags' => $uniqueTags->map->only(['id', 'name'])->values(),
+                'possibleTags' => $possibleTags->map->only(['id', 'name']),
             ];
-        });
+            $processedTaskIds[] = $task->id;
+        }
+        return json_encode([
+            'tag' => $tagData,
+            'tasksByList' => array_values($tasksByList)
+        ]);
     }
 
     public function addTagToTask() : string {
@@ -152,10 +140,9 @@ class TagController extends Controller
         return json_encode($tag);
     }
 
-    public function updateTag() : string {
+    public function updateTag(Tag $tag) : string {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
-        $tag = Tag::find($body->tag_id);
         $tag->name = $body->name;
         $tag->save();
         $this->sendUpdateTagToSocket($tag, $body->uuid);
@@ -172,10 +159,9 @@ class TagController extends Controller
         $tag_task->delete();
     }
 
-    public function deleteTag() : void {
+    public function deleteTag(Tag $tag) : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
-        $tag = Tag::find($body->id);
         $tag_task = TagTask::where('tag_id', $body->id);
         $this->sendDeleteTagToSocket($tag, $body->uuid);
         $tag_task->delete();

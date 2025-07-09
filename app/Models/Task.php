@@ -16,11 +16,11 @@ class Task extends Model
 
     public function personal_list(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(PersonalList::class);
+        return $this->belongsTo(PersonalList::class, 'id_list');
     }
 
-    public function tags(): BelongsToMany
+    public function tags()
     {
-        return $this->belongsToMany(Tag::class, 'tag_task');
+        return $this->belongsToMany(Tag::class, 'tag_task', 'task_id', 'tag_id');
     }
 }
