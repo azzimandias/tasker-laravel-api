@@ -24,4 +24,9 @@ class PersonalList extends Model
     {
         return $this->belongsToMany(User::class, 'user_list', 'list_id', 'user_id');
     }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'id_list')->whereNull('tasks.deleted_at');
+    }
 }

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 class TagController extends Controller
 {
     public function tags(User $user) : string {
+        $user = Auth::user();
         $tags = $user->tags;
         $this->sendPersonalTagsToSocket($tags, $_GET['uuid']);
         return json_encode($tags);
@@ -39,83 +40,44 @@ class TagController extends Controller
     public function taggedTasks(Tag $tag = null): string
     {
         $user = Auth::user();
-        $allTags = Tag::whereNull('deleted_at')
-            ->whereHas('users', function($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->get()
-            ->keyBy('id');
         if (!$tag) {
             $tagData = ['id' => 0, 'name' => 'Все теги'];
-            $tasks = Task::whereHas('tags', function($query) use ($user) {
-                $query->whereNull('tags.deleted_at')
-                    ->whereNull('tag_task.deleted_at')
-                    ->whereHas('users', function($q) use ($user) {
-                        $q->where('user_id', $user->id);
+            $lists = PersonalList::with(['tasks.tags'])
+                ->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+                ->whereNull('deleted_at')
+                ->get()
+                ->map(function($list) {
+                    $list->tasks->map(function($task) {
+                        $task->possibleTags = Tag::whereNotIn('id', $task->tags->pluck('id'))
+                            ->whereNull('deleted_at')
+                            ->get();
+                        return $task;
                     });
-            })
-            ->with([
-                'tags' => function($query) use ($user) {
-                    $query->whereNull('tags.deleted_at')
-                        ->whereNull('tag_task.deleted_at')
-                        ->whereHas('users', function($q) use ($user) {
-                            $q->where('user_id', $user->id);
-                        });
-                },
-                'personal_list'
-            ])
-            ->get();
+                    return $list;
+                });
         } else {
             $tagData = $tag->only(['id', 'name']);
-            $tasks = $tag->tasks()
-                ->wherePivotNull('deleted_at')
-                ->whereHas('tags.users', function($q) use ($user) {
-                    $q->where('user_id', $user->id);
-                })
-                ->with([
-                    'tags' => function($query) use ($user) {
-                        $query->whereNull('tags.deleted_at')
-                            ->whereNull('tag_task.deleted_at')
-                            ->whereHas('users', function($q) use ($user) {
-                                $q->where('user_id', $user->id);
-                            });
-                    },
-                    'personal_list'
-                ])
-                ->get();
-        }
-        $tasksByList = [];
-        $processedTaskIds = [];
-        foreach ($tasks as $task) {
-            if (in_array($task->id, $processedTaskIds) || !$task->personal_list) {
-                continue;
-            }
-            $listId = $task->personal_list->id;
-            if (!isset($tasksByList[$listId])) {
-                $tasksByList[$listId] = [
-                    'list' => $task->personal_list,
-                    'tasks' => []
-                ];
-            }
-            $uniqueTags = $task->tags->unique('id');
-            $currentTagIds = $uniqueTags->pluck('id')->toArray();
-            $possibleTags = $allTags->except($currentTagIds)->values();
-
-            $tasksByList[$listId]['tasks'][] = [
-                'id' => $task->id,
-                'name' => $task->name,
-                'description' => $task->description,
-                'is_done' => $task->is_done,
-                'is_flagged' => $task->is_flagged,
-                'deadline' => $task->deadline,
-                'tags' => $uniqueTags->map->only(['id', 'name'])->values(),
-                'possibleTags' => $possibleTags->map->only(['id', 'name']),
-            ];
-            $processedTaskIds[] = $task->id;
+            $tagId = $tag->id;
+            $lists = PersonalList::with(['tasks' => function($query) use ($tagId) {
+                $query->whereHas('tags', function($q) use ($tagId) {
+                        $q->where('tags.id', $tagId);
+                    })->with(['tags']);
+            }])->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+                ->whereNull('deleted_at')
+                ->get()
+                ->map(function($list) {
+                    $list->tasks->map(function($task) {
+                        $task->possibleTags = Tag::whereNotIn('id', $task->tags->pluck('id'))
+                            ->whereNull('deleted_at')
+                            ->get();
+                        return $task;
+                    });
+                    return $list;
+                });
         }
         return json_encode([
             'tag' => $tagData,
-            'tasksByList' => array_values($tasksByList)
+            'tasksByList' => $lists,
         ]);
     }
 

@@ -16,12 +16,12 @@ class Tag extends Model
 
     public function tasks(): BelongsToMany
     {
-        return $this->belongsToMany(Task::class, 'tag_task', 'tag_id', 'task_id');
+        return $this->belongsToMany(Task::class, 'tag_task');
     }
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'user_tag', 'tag_id', 'user_id');
+        return $this->belongsToMany(User::class, 'user_tag');
     }
 
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 
 class Task extends Model
 {
@@ -21,6 +22,22 @@ class Task extends Model
 
     public function tags()
     {
-        return $this->belongsToMany(Tag::class, 'tag_task', 'task_id', 'tag_id');
+        return $this->belongsToMany(Tag::class, 'tag_task')
+            ->whereNull('tag_task.deleted_at')
+            ->whereNull('tags.deleted_at');
+    }
+
+    public function possibleTags()
+    {
+        $taskId = $this->id ?: 0;
+
+        return $this->belongsToMany(Tag::class, 'tag_task', 'task_id', 'tag_id')
+            ->whereNotIn('tags.id', function($query) use ($taskId) {
+                $query->select('tag_id')
+                    ->from('tag_task')
+                    ->where('task_id', $taskId);
+            })
+            ->whereNull('tag_task.deleted_at')
+            ->whereNull('tags.deleted_at');
     }
 }
