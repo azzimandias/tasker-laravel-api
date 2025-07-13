@@ -17,7 +17,8 @@ class Task extends Model
 
     public function personal_list(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(PersonalList::class, 'id_list');
+        return $this->belongsTo(PersonalList::class, 'id_list')
+            ->whereNull('personal_list.deleted_at');
     }
 
     public function tags()

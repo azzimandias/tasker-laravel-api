@@ -19,25 +19,33 @@ class PersonalListController extends Controller
 {
     public function lists() : string {
         $this->updatePersonalCountOfActiveTasks();
-        $response = PersonalList::select('personal_lists.*')
-            ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-            ->where('user_list.user_id',$_GET['user_id'])
+        $user = Auth::user();
+        $lists = PersonalList::whereHas('users', fn($q) => $q->where('users.id', $user->id))
+            ->whereNull('deleted_at')
             ->get();
-        $this->sendPersonalCountOfActiveTasksToSocket($response, $_GET['uuid']);
-        return json_encode($response);
+        $this->sendPersonalCountOfActiveTasksToSocket($lists, $_GET['uuid']);
+        return json_encode($lists);
     }
 
     private function updatePersonalCountOfActiveTasks() : void {
-        $PersonalLists = PersonalList::select('personal_lists.*')
-            ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-            ->where('user_list.user_id',$_GET['user_id'])
+        $user = Auth::user();
+        $personalLists = PersonalList::whereHas('users', fn($q) => $q->where('users.id', $user->id))
+            ->whereNull('deleted_at')
             ->get();
-        foreach ($PersonalLists as $list) {
-            $arr = Task::where('id_list', $list['id'])->where('is_done', 0)->get();
-            $pl = PersonalList::find($list['id']);
-            $pl->count_of_active_tasks = count($arr);
-            $pl->save();
-        }
+
+        $activeTasksCounts = Task::whereIn('id_list', $personalLists->pluck('id'))
+            ->where('is_done', 0)
+            ->selectRaw('id_list, COUNT(*) as count')
+            ->groupBy('id_list')
+            ->pluck('count', 'id_list');
+
+        PersonalList::whereIn('id', $personalLists->pluck('id'))
+            ->update([
+                'count_of_active_tasks' => DB::raw('CASE id ' .
+                    $personalLists->map(function($list) use ($activeTasksCounts) {
+                        return "WHEN {$list->id} THEN " . ($activeTasksCounts[$list->id] ?? 0);
+                    })->implode(' ') . ' END')
+            ]);
     }
 
     public function sendPersonalCountOfActiveTasksToSocket($object, $uuid): void
@@ -62,6 +70,8 @@ class PersonalListController extends Controller
     }
 
     private function updateSortCountOfActiveTasks() : array {
+        $user = Auth::user();
+        $userId = $user->id;
         return [
             [
                 'id' => 1,
@@ -95,12 +105,9 @@ class PersonalListController extends Controller
             ],
             [
                 'id' => 4,
-                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
-                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                    ->where('user_list.user_id', $_GET['user_id'])
-                    ->where('personal_lists.deleted_at', null)
-                    ->get()
-                )
+                'count' => Task::with(['personal_list' => function($query) use ($userId) {
+                    $query->whereHas('users', fn($q) => $q->where('users.id', $userId));
+                }])->groupBy('id')->get()
             ],
         ];
     }
