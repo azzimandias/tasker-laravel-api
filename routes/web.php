@@ -12,4 +12,6 @@ Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
 
+Route::get('/dev/create', [DevController::class, 'devCreate']);
+
 require __DIR__.'/auth.php';

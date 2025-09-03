@@ -7,7 +7,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/dev/create', [DevController::class, 'devCreate']);
+/*Route::get('/dev/create', [DevController::class, 'devCreate']);*/
 
 Route::prefix('auth')->group(function() {
     Route::post('/login', [UserController::class, 'login']);
