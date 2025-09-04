@@ -12,6 +12,10 @@ Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
 
+Route::get('/hello', function () {
+    return ['Hello World!'];
+});
+
 Route::get('/dev/create', [DevController::class, 'devCreate']);
 
 require __DIR__.'/auth.php';
