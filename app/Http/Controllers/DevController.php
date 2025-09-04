@@ -12,6 +12,9 @@ use JetBrains\PhpStorm\NoReturn;
 class DevController extends Controller
 {
     #[NoReturn] public function devCreate() : void {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
         $devLists = [
             [
                 'name' => 'Рутина',
