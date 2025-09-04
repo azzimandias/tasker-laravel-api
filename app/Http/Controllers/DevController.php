@@ -11,7 +11,7 @@ use JetBrains\PhpStorm\NoReturn;
 
 class DevController extends Controller
 {
-    #[NoReturn] public function devCreate() : void {
+    #[NoReturn] public function devCreate() : string {
         ini_set('display_errors', 1);
         ini_set('display_startup_errors', 1);
         error_reporting(E_ALL);
@@ -42,6 +42,7 @@ class DevController extends Controller
                 'color' => '#bbaa48',
             ],
         ];
+        return json_encode($devLists);
         foreach ($devLists as $list) {
             PersonalList::create([
                 'name' => $list['name'],
