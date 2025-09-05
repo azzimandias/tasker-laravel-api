@@ -105,15 +105,17 @@ class PersonalListController extends Controller
                     ->where('is_done', 1)
                     ->get()*/
                     Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-
+                        ->with('personal_list')
+                        ->where('is_done', 1)
+                        ->get()
                 )
             ],
             [
                 'id' => 4,
                 'count' => count(
                     Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-                    //->with('personal_list')
-                    ->get()
+                        ->with('personal_list')
+                        ->get()
                 )
             ],
         ];
