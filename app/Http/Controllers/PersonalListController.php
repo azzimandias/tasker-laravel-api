@@ -75,7 +75,8 @@ class PersonalListController extends Controller
         return [
             [
                 'id' => 1,
-                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                'count' => count(
+                    Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
                     ->where('personal_lists.deleted_at', null)
@@ -85,7 +86,8 @@ class PersonalListController extends Controller
             ],
             [
                 'id' => 2,
-                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                'count' => count(
+                    Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
                     ->where('personal_lists.deleted_at', null)
@@ -95,18 +97,22 @@ class PersonalListController extends Controller
             ],
             [
                 'id' => 3,
-                'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                'count' => count(
+                    /*Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
                     ->where('personal_lists.deleted_at', null)
                     ->where('is_done', 1)
-                    ->get()
+                    ->get()*/
+                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
+
                 )
             ],
             [
                 'id' => 4,
-                'count' => count(Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-                    ->with('personal_list')
+                'count' => count(
+                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
+                    //->with('personal_list')
                     ->get()
                 )
             ],
