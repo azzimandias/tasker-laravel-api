@@ -22,7 +22,8 @@ class PersonalList extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'user_list', 'list_id', 'user_id');
+        return $this->belongsToMany(User::class, 'user_list', 'list_id', 'user_id')
+            ->wherePivotNull('deleted_at');
     }
 
     public function tasks()
