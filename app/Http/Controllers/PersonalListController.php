@@ -76,23 +76,31 @@ class PersonalListController extends Controller
             [
                 'id' => 1,
                 'count' => count(
-                    Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                    /*Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
                     ->where('personal_lists.deleted_at', null)
                     ->where('tasks.deadline', date('Y-m-d'))
-                    ->get()
+                    ->get()*/
+                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
+                        ->with('personal_list')
+                        ->where('deadline', date('Y-m-d'))
+                        ->get()
                 )
             ],
             [
                 'id' => 2,
                 'count' => count(
-                    Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
+                    /*Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
                     ->where('user_list.user_id', $_GET['user_id'])
                     ->where('personal_lists.deleted_at', null)
                     ->where('is_flagged', 1)
-                    ->get()
+                    ->get()*/
+                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
+                        ->with('personal_list')
+                        ->where('is_flagged', 1)
+                        ->get()
                 )
             ],
             [
