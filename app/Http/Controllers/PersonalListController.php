@@ -70,61 +70,24 @@ class PersonalListController extends Controller
     }
 
     private function updateSortCountOfActiveTasks() : array {
-        $user = Auth::user();
-        $userId = $user->id;
+        $userId = Auth::id();
+        $baseQuery = Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId));
         return [
             [
                 'id' => 1,
-                'count' => count(
-                    /*Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
-                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                    ->where('user_list.user_id', $_GET['user_id'])
-                    ->where('personal_lists.deleted_at', null)
-                    ->where('tasks.deadline', date('Y-m-d'))
-                    ->get()*/
-                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-                        ->with('personal_list')
-                        ->where('deadline', date('Y-m-d'))
-                        ->get()
-                )
+                'count' => (clone $baseQuery)->whereDate('deadline', today())->count()
             ],
             [
                 'id' => 2,
-                'count' => count(
-                    /*Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
-                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                    ->where('user_list.user_id', $_GET['user_id'])
-                    ->where('personal_lists.deleted_at', null)
-                    ->where('is_flagged', 1)
-                    ->get()*/
-                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-                        ->with('personal_list')
-                        ->where('is_flagged', 1)
-                        ->get()
-                )
+                'count' => (clone $baseQuery)->where('is_flagged', true)->count()
             ],
             [
                 'id' => 3,
-                'count' => count(
-                    /*Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
-                    ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-                    ->where('user_list.user_id', $_GET['user_id'])
-                    ->where('personal_lists.deleted_at', null)
-                    ->where('is_done', 1)
-                    ->get()*/
-                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-                        ->with('personal_list')
-                        ->where('is_done', 1)
-                        ->get()
-                )
+                'count' => (clone $baseQuery)->where('is_done', true)->count()
             ],
             [
                 'id' => 4,
-                'count' => count(
-                    Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-                        ->with('personal_list')
-                        ->get()
-                )
+                'count' => $baseQuery->count()
             ],
         ];
     }
