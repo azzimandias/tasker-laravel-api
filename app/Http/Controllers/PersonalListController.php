@@ -105,9 +105,7 @@ class PersonalListController extends Controller
             ],
             [
                 'id' => 4,
-                'count' => count(Task::whereHas('personal_list.users', fn($q) => $q->where('users.id', $userId))
-                    ->with('personal_list')
-                    ->get())
+                'count' => Task::with('personal_list')->limit(10)->get()
             ],
         ];
     }
