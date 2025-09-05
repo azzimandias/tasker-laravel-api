@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tag;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Task;
 use Illuminate\Support\Facades\Auth;
@@ -72,15 +73,34 @@ class TaskController extends Controller
         $task->delete();
     }
 
-    public function globalSearch(): string
+    public function globalSearch(): JsonResponse
     {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $searchString = $body->searchString;
-        $tasks = Task::where('name', 'like', "%$searchString%")
-            ->where('deleted_at', null)
-            ->get();
-        return json_encode($tasks);
+        try {
+            $body = json_decode(request()->getContent(), true);
+
+            $userId = Auth::id();
+
+            if (!isset($body['searchString']) || empty(trim($body['searchString']))) {
+                return response()->json(['error' => 'Search string is required'], 400);
+            }
+
+            $searchString = trim($body['searchString']);
+
+            $tasks = Task::with(['personal_list', 'tags'])
+                ->whereHas('personal_list.users', function($query) use ($userId) {
+                    $query->where('users.id', $userId);
+                })
+                ->where('name', 'LIKE', '%' . $searchString . '%')
+                ->whereNull('deleted_at')
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get();
+
+            return response()->json($tasks);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Server error'], 500);
+        }
     }
 
     /**
