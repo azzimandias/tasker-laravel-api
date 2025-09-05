@@ -73,7 +73,7 @@ class PersonalListController extends Controller
         $user = Auth::user();
         $userId = $user->id;
         return [
-            [
+            /*[
                 'id' => 1,
                 'count' => count(Task::join('personal_lists','tasks.id_list','=','personal_lists.id')
                     ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
@@ -102,7 +102,7 @@ class PersonalListController extends Controller
                     ->where('is_done', 1)
                     ->get()
                 )
-            ],
+            ],*/
             [
                 'id' => 4,
                 'count' => Task::with(['personal_list' => function($query) use ($userId) {
