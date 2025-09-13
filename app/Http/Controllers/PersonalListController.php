@@ -129,7 +129,7 @@ class PersonalListController extends Controller
             'tasks.deadline as deadline')
             ->join('personal_lists','tasks.id_list','=','personal_lists.id')
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-            ->where('user_list.user_id', $_GET['user_id'])
+            ->where('user_list.user_id', Auth::id())
             ->where('personal_lists.id', $id_list)
             ->where('personal_lists.deleted_at', null);
         switch ($case) {
@@ -144,19 +144,23 @@ class PersonalListController extends Controller
                 break;
         }
         return $tasks->get()->map(function($task) {
-            return (new TaskController)->fullTask($task);;
+            return (new TaskController)->fullTask($task);
         });
     }
 
-    public function personalListTasks() : string {
+    public function personalListTasksById(PersonalList $personalList) : string {
         $this->updatePersonalCountOfActiveTasks();
+
+        $tasks = $this->personalList($personalList->id, false);
+        $tasksDone = $this->personalList($personalList->id, true);
+        $result = ['list'=>$personalList, 'tasks'=>$tasks, 'tasksDone'=>$tasksDone];
+
+        return json_encode($result);
+    }
+
+    public function personalListTasksByName() : string {
         $result = [];
-        if(isset($_GET['id'])) {
-            $list = PersonalList::find($_GET['id']);
-            $tasks = $this->personalList($_GET['id'], false);
-            $tasksDone = $this->personalList($_GET['id'], true);
-            $result = ['list'=>$list, 'tasks'=>$tasks, 'tasksDone'=>$tasksDone];
-        } elseif (isset($_GET['name'])) {
+        if (isset($_GET['name'])) {
             $PersonalLists = PersonalList::where('deleted_at', null)->get();
 
             switch ($_GET['name']) {
@@ -178,7 +182,7 @@ class PersonalListController extends Controller
                     break;
                 case 'done':
                     $result = [
-                        'sortList' =>[
+                        'sortList' => [
                             'id' => 3,
                             'name' => 'Завершено'
                         ]
@@ -186,7 +190,7 @@ class PersonalListController extends Controller
                     break;
                 case 'all':
                     $result = [
-                        'sortList' =>[
+                        'sortList' => [
                             'id' => 4,
                             'name' => 'Все'
                         ]
@@ -200,7 +204,7 @@ class PersonalListController extends Controller
                     case 'today':
                         $tasks = $this->sortList($pl['id'], 'today');
                         if (count($tasks) > 0) {
-                            $result['tasksByList'][] = ['personal_list' => $pl,'tasks' => $tasks];
+                            $result['tasksByList'][] = ['personal_list' => $pl, 'tasks' => $tasks];
                         }
                         break;
                     case 'with_flag':

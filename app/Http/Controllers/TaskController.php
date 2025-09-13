@@ -73,7 +73,7 @@ class TaskController extends Controller
         $task->delete();
     }
 
-    public function globalSearch(): JsonResponse
+    /*public function globalSearch(): JsonResponse
     {
         try {
             $body = json_decode(request()->getContent(), true);
@@ -101,7 +101,7 @@ class TaskController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Server error'], 500);
         }
-    }
+    }*/
 
     /**
      * Отправка обновления задачи через WebSocket

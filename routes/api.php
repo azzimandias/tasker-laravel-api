@@ -28,7 +28,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(PersonalListController::class)->group(function() {
         Route::get('/lists', 'lists');
         Route::get('/sortLists', 'sortLists');
-        Route::get('/list', 'personalListTasks');
+        Route::get('/list/{personalList:id}', 'personalListTasksById');
+        Route::get('/listName', 'personalListTasksByName');
         Route::post('/saveList', 'saveList');
         Route::post('/deleteList', 'deleteList');
         Route::post('/updateList/{list:id}', 'updateList');
