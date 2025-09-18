@@ -33,13 +33,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/saveList', 'saveList');
         Route::post('/deleteList', 'deleteList');
         Route::post('/updateList/{list:id}', 'updateList');
+        Route::post('/globalSearch', 'globalSearch');
     });
 
     Route::controller(TaskController::class)->group(function() {
         Route::post('/createTask', 'createTask');
         Route::post('/updateTask/{task:id}', 'updateTask');
         Route::post('/deleteTask', 'deleteTask');
-        Route::post('/globalSearch', 'globalSearch');
     });
 
     Route::controller(TagController::class)->group(function() {

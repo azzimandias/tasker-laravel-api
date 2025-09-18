@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tag;
 use App\Models\Task;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\PersonalList;
 use App\Models\UserList;
@@ -119,39 +120,35 @@ class PersonalListController extends Controller
 
     private function sortList($id_list, $case = null) : object {
         $userId = Auth::id();
-        $tasks = Task::select(
-                'personal_lists.id as personal_lists_id',
-                'personal_lists.name as personal_lists_name',
-                'personal_lists.color as color',
-                'tasks.id as id',
-                'tasks.name as name',
-                'tasks.is_done as is_done',
-                'tasks.is_flagged as is_flagged',
-                'tasks.description as description',
-                'tasks.deadline as deadline'
-            )
-            ->join('personal_lists','tasks.id_list','=','personal_lists.id')
-            ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
-            ->where('user_list.user_id', Auth::id())
-            ->where('personal_lists.id', $id_list)
-            ->where('personal_lists.deleted_at', null);
-        $tasksV2 = Task::with(['personal_list', 'tags'])
-            ->whereHas('personal_list.users', function($query) use ($userId) {
-                $query->where('users.id', $userId);
-            });
-        dd($tasksV2);
+
+        $tasksV2 = Task::with([
+            'personal_list' => function($query) {
+                $query->whereNull('deleted_at')
+                    ->select('id', 'name', 'color');
+            },
+            'tags'
+        ])->whereHas('personal_list', function($query) use ($userId, $id_list) {
+                $query->whereNull('deleted_at')
+                    ->where('id', $id_list)
+                    ->whereHas('users', function($q) use ($userId) {
+                        $q->where('users.id', $userId);
+                    });
+        })->where('tasks.deleted_at', null)
+          ->select('tasks.*');
+
         switch ($case) {
             case 'today':
-                $tasks->where('deadline', date('Y-m-d'));
+                $tasksV2->where('deadline', date('Y-m-d'));
                 break;
             case 'with_flag':
-                $tasks->where('is_flagged', 1);
+                $tasksV2->where('is_flagged', 1);
                 break;
             case 'done':
-                $tasks->where('is_done', 1);
+                $tasksV2->where('is_done', 1);
                 break;
         }
-        return $tasks->get()->map(function($task) {
+
+        return $tasksV2->get()->map(function($task) {
             return (new TaskController)->fullTask($task);
         });
     }
@@ -279,6 +276,62 @@ class PersonalListController extends Controller
         }
         $list->save();
         $this->sendListUpdateToSocket($list, $body->uuid);
+    }
+
+    public function globalSearch(): JsonResponse
+    {
+        try {
+            $body = json_decode(request()->getContent(), true);
+
+            $userId = Auth::id();
+
+            if (!isset($body['searchString']) || empty(trim($body['searchString']))) {
+                return response()->json(['error' => 'Search string is required'], 400);
+            }
+
+            $searchString = trim($body['searchString']);
+
+            /*$tasks = Task::with(['personal_list', 'tags'])
+                ->whereHas('personal_list.users', function($query) use ($userId) {
+                    $query->where('users.id', $userId);
+                })
+                ->where('name', 'LIKE', '%' . $searchString . '%')
+                ->whereNull('deleted_at')
+                ->orderBy('created_at', 'desc')
+                ->limit(50)
+                ->get();*/
+
+            /*$tasksV2 = Task::with([
+                'personal_list' => function($query) {
+                    $query->whereNull('deleted_at')
+                        ->select('id', 'name', 'color');
+                },
+                'tags'
+            ])->whereHas('personal_list', function($query) use ($userId) {
+                $query->whereNull('deleted_at')
+                    ->whereHas('users', function($q) use ($userId) {
+                        $q->where('users.id', $userId);
+                    });
+            })->where('tasks.deleted_at', null)
+                ->where('tasks.name', 'LIKE', '%' . $searchString . '%')
+                ->select('tasks.*')
+                ->get();*/
+
+            $personalLists = PersonalList::with(['tasks' => function($query) use ($searchString, $userId) {
+                $query->where('name', 'LIKE', '%' . $searchString . '%')
+                    ->whereNull('deleted_at')
+                    ->whereHas('personal_list.users', function($q) use ($userId) {
+                        $q->where('users.id', $userId);
+                    });
+            }])->whereHas('users', function($query) use ($userId) {
+                    $query->where('users.id', $userId);
+            })->whereNull('deleted_at')->get();
+
+            return response()->json($personalLists);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Server error'], 500);
+        }
     }
 
     /**

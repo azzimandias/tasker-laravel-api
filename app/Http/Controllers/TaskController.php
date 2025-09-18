@@ -73,36 +73,6 @@ class TaskController extends Controller
         $task->delete();
     }
 
-    /*public function globalSearch(): JsonResponse
-    {
-        try {
-            $body = json_decode(request()->getContent(), true);
-
-            $userId = Auth::id();
-
-            if (!isset($body['searchString']) || empty(trim($body['searchString']))) {
-                return response()->json(['error' => 'Search string is required'], 400);
-            }
-
-            $searchString = trim($body['searchString']);
-
-            $tasks = Task::with(['personal_list', 'tags'])
-                ->whereHas('personal_list.users', function($query) use ($userId) {
-                    $query->where('users.id', $userId);
-                })
-                ->where('name', 'LIKE', '%' . $searchString . '%')
-                ->whereNull('deleted_at')
-                ->orderBy('created_at', 'desc')
-                ->limit(50)
-                ->get();
-
-            return response()->json($tasks);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Server error'], 500);
-        }
-    }*/
-
     /**
      * Отправка обновления задачи через WebSocket
      */
