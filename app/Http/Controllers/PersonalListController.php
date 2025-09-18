@@ -19,8 +19,8 @@ class PersonalListController extends Controller
 {
     public function lists() : string {
         $this->updatePersonalCountOfActiveTasks();
-        $user = Auth::user();
-        $lists = PersonalList::whereHas('users', fn($q) => $q->where('users.id', $user->id))
+        $userId = Auth::id();
+        $lists = PersonalList::whereHas('users', fn($q) => $q->where('users.id', $userId))
             ->whereNull('deleted_at')
             ->get();
         $this->sendPersonalCountOfActiveTasksToSocket($lists, $_GET['uuid']);
@@ -28,8 +28,8 @@ class PersonalListController extends Controller
     }
 
     private function updatePersonalCountOfActiveTasks() : void {
-        $user = Auth::user();
-        $personalLists = PersonalList::whereHas('users', fn($q) => $q->where('users.id', $user->id))
+        $userId = Auth::id();
+        $personalLists = PersonalList::whereHas('users', fn($q) => $q->where('users.id', $userId))
             ->whereNull('deleted_at')
             ->get();
 
@@ -118,20 +118,28 @@ class PersonalListController extends Controller
     }
 
     private function sortList($id_list, $case = null) : object {
-        $tasks = Task::select('personal_lists.id as personal_lists_id',
-            'personal_lists.name as personal_lists_name',
-            'personal_lists.color as color',
-            'tasks.id as id',
-            'tasks.name as name',
-            'tasks.is_done as is_done',
-            'tasks.is_flagged as is_flagged',
-            'tasks.description as description',
-            'tasks.deadline as deadline')
+        $userId = Auth::id();
+        $tasks = Task::select(
+                'personal_lists.id as personal_lists_id',
+                'personal_lists.name as personal_lists_name',
+                'personal_lists.color as color',
+                'tasks.id as id',
+                'tasks.name as name',
+                'tasks.is_done as is_done',
+                'tasks.is_flagged as is_flagged',
+                'tasks.description as description',
+                'tasks.deadline as deadline'
+            )
             ->join('personal_lists','tasks.id_list','=','personal_lists.id')
             ->join('user_list', 'personal_lists.id', '=', 'user_list.list_id')
             ->where('user_list.user_id', Auth::id())
             ->where('personal_lists.id', $id_list)
             ->where('personal_lists.deleted_at', null);
+        $tasksV2 = Task::with(['personal_list', 'tags'])
+            ->whereHas('personal_list.users', function($query) use ($userId) {
+                $query->where('users.id', $userId);
+            });
+        dd($tasksV2);
         switch ($case) {
             case 'today':
                 $tasks->where('deadline', date('Y-m-d'));
