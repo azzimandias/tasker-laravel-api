@@ -86,11 +86,11 @@ class TagController extends Controller
         $body = json_decode($body);
 
         $tag_task = new TagTask;
-        $tag_task->tag_id = $body->tag_id;
+        $tag_task->tag_id = $body->id;
         $tag_task->task_id = $body->task_id;
         $tag_task->save();
 
-        $tag = Tag::find($body->tag_id);
+        $tag = Tag::find($body->id);
 
         $this->sendAddTagTaskToSocket($tag, $body->task_id, $body->uuid);
         return json_encode($body);
@@ -134,8 +134,8 @@ class TagController extends Controller
     public function deleteTagTask() : void {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
-        $tag = Tag::find($body->tag_id);
-        $tag_task = TagTask::where('tag_id', $body->tag_id)
+        $tag = Tag::find($body->id);
+        $tag_task = TagTask::where('tag_id', $body->id)
             ->where('task_id', $body->task_id);
         $this->sendDeleteTagTaskToSocket($tag, $body->task_id, $body->uuid);
         $tag_task->delete();

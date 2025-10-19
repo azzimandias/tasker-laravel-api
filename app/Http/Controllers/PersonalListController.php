@@ -291,32 +291,6 @@ class PersonalListController extends Controller
 
             $searchString = trim($body['searchString']);
 
-            /*$tasks = Task::with(['personal_list', 'tags'])
-                ->whereHas('personal_list.users', function($query) use ($userId) {
-                    $query->where('users.id', $userId);
-                })
-                ->where('name', 'LIKE', '%' . $searchString . '%')
-                ->whereNull('deleted_at')
-                ->orderBy('created_at', 'desc')
-                ->limit(50)
-                ->get();*/
-
-            /*$tasksV2 = Task::with([
-                'personal_list' => function($query) {
-                    $query->whereNull('deleted_at')
-                        ->select('id', 'name', 'color');
-                },
-                'tags'
-            ])->whereHas('personal_list', function($query) use ($userId) {
-                $query->whereNull('deleted_at')
-                    ->whereHas('users', function($q) use ($userId) {
-                        $q->where('users.id', $userId);
-                    });
-            })->where('tasks.deleted_at', null)
-                ->where('tasks.name', 'LIKE', '%' . $searchString . '%')
-                ->select('tasks.*')
-                ->get();*/
-
             $personalLists = PersonalList::with(['tasks' => function($query) use ($searchString, $userId) {
                 $query->where('name', 'LIKE', '%' . $searchString . '%')
                     ->whereNull('deleted_at')
