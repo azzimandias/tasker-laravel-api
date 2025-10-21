@@ -239,18 +239,17 @@ class PersonalListController extends Controller
     public function saveList() : string {
         $body = file_get_contents('php://input');
         $body = json_decode($body);
-        $user = Auth::user();
         $new_list = $body->list;
 
         $list = new PersonalList;
         $list->name = $new_list->name;
         $list->color = $new_list->color;
         $list->count_of_active_tasks = 0;
-        $list->owner_id = $user->id;
+        $list->owner_id = Auth::id();
         $list->save();
 
         $user_list = new UserList;
-        $user_list->user_id = $new_list->user_id;
+        $user_list->user_id = Auth::id();
         $user_list->list_id = $list->id;
         $user_list->save();
 

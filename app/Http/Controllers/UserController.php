@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -19,5 +20,18 @@ class UserController extends Controller
         $user->name = $body->user_name;
         $user->surname = $body->user_surname;
         $user->save();
+    }
+    public function findUsers(): string {
+        $body = json_decode(file_get_contents('php://input'));
+        $users = User::where('login', 'like', "%{$body->searchStr}%")
+            ->where('id', '<>', Auth::id())
+            ->get(['id', 'login'])
+            ->map(function ($user) {
+                return [
+                    'value' => $user->id,
+                    'label' => $user->login,
+                ];
+            });
+        return json_encode($users);
     }
 }
