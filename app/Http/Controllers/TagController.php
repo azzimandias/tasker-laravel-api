@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TagResource;
 use App\Models\PersonalList;
 use App\Models\Tag;
 use App\Models\TagTask;
@@ -9,6 +10,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\UserTag;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +19,12 @@ use Illuminate\Support\Facades\Log;
 
 class TagController extends Controller
 {
-    public function tags(User $user) : string {
+    public function tags(User $user) : JsonResponse
+    {
         $user = Auth::user();
         $tags = $user->tags;
         $this->sendPersonalTagsToSocket($tags, $_GET['uuid']);
-        return json_encode($tags);
+        return response()->json(TagResource::collection($tags));
     }
 
     public function sendPersonalTagsToSocket($array, $uuid): void
@@ -81,73 +84,69 @@ class TagController extends Controller
         ]);
     }
 
-    public function addTagToTask() : string {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-
-        $tag_task = new TagTask;
-        $tag_task->tag_id = $body->id;
-        $tag_task->task_id = $body->task_id;
-        $tag_task->save();
-
-        $tag = Tag::find($body->id);
-
-        $this->sendAddTagTaskToSocket($tag, $body->task_id, $body->uuid);
-        return json_encode($body);
+    public function addTagToTask(Request $request): JsonResponse
+    {
+        $tagId = $request->input('id');
+        $taskId = $request->input('task_id');
+        $task = Task::findOrFail($taskId);
+        $tag = Tag::findOrFail($tagId);
+        $task->tags()->syncWithoutDetaching([$tagId]);
+        $this->sendAddTagTaskToSocket($tag, $taskId, $request->input('uuid'));
+        return response()->json(new TagResource($tag));
     }
 
-    public function createTag() : string {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $user = Auth::user();
-
-        $tag = new Tag;
-        $tag->name = $body->name;
-        $tag->save();
-        $newTagId = $tag->id;
-
-        $user_tag = new UserTag;
-        $user_tag->user_id = $user->id;
-        $user_tag->tag_id = $newTagId;
-        $user_tag->save();
-
-        if ($body->task_id) {
-            $tag_task = new TagTask;
-            $tag_task->tag_id = $newTagId;
-            $tag_task->task_id = $body->task_id;
-            $tag_task->save();
+    public function createTag(Request $request): JsonResponse
+    {
+        $newTagName = $request->input('name');
+        $taskId = $request->input('task_id');
+        $tag = Tag::create([
+            'name' => $newTagName,
+        ]);
+        $tag->users()->syncWithoutDetaching([Auth::id()]);
+        if ($taskId) {
+            $task = Task::findOrFail($taskId);
+            $task->tags()->syncWithoutDetaching([$tag->id]);
         }
-
-        $this->sendTagCreateToSocket($tag, $body->task_id, $body->uuid);
-        return json_encode($tag);
+        $this->sendTagCreateToSocket($tag, $taskId, $request->input('uuid'));
+        return response()->json(new TagResource($tag));
     }
 
-    public function updateTag(Tag $tag) : string {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $tag->name = $body->name;
-        $tag->save();
-        $this->sendUpdateTagToSocket($tag, $body->uuid);
-        return json_encode($tag);
+    public function updateTag(Request $request, Tag $tag) : JsonResponse
+    {
+        $newTagName = $request->input('name');
+        $tag->update([
+            'name'  => $newTagName ?? $tag->name,
+        ]);
+        $this->sendUpdateTagToSocket($tag, $request->input('uuid'));
+        return response()->json([
+            'message' => 'Tag updated successfully',
+            'tag' => new TagResource($tag->fresh())
+        ]);
     }
 
-    public function deleteTagTask() : void {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $tag = Tag::find($body->id);
-        $tag_task = TagTask::where('tag_id', $body->id)
-            ->where('task_id', $body->task_id);
-        $this->sendDeleteTagTaskToSocket($tag, $body->task_id, $body->uuid);
+    public function deleteTagTask(Request $request) : JsonResponse
+    {
+        $tagId = $request->input('id');
+        $taskId = $request->input('task_id');
+        $tag = Tag::find($tagId);
+        $tag_task = TagTask::where('tag_id', $tagId)
+            ->where('task_id', $taskId);
+        $this->sendDeleteTagTaskToSocket($tag, $taskId, $request->input('uuid'));
         $tag_task->delete();
+        return response()->json(['message' => 'Tag removed from task successfully']);
     }
 
-    public function deleteTag(Tag $tag) : void {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $tag_task = TagTask::where('tag_id', $body->id);
-        $this->sendDeleteTagToSocket($tag, $body->uuid);
+    public function deleteTag(int $id) : JsonResponse
+    {
+        $tag = Tag::find($id);
+        if (!$tag) {
+            return response()->json(['message' => 'Tag not found'], 404);
+        }
+        $tag_task = TagTask::where('tag_id', $id);
+        //$this->sendDeleteTagToSocket($tag, $body->uuid);
         $tag_task->delete();
         $tag->delete();
+        return response()->json(['message' => 'Tag deleted successfully']);
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\DevController;
 use App\Http\Controllers\PersonalListController;
+use App\Http\Controllers\MembershipInvitationsController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
@@ -31,16 +32,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/sortLists', 'sortLists');
         Route::get('/list/{personalList:id}', 'personalListTasksById');
         Route::get('/listName', 'personalListTasksByName');
-        Route::post('/saveList', 'saveList');
-        Route::post('/deleteList', 'deleteList');
-        Route::post('/updateList/{list:id}', 'updateList');
+        Route::post('/createList', 'createList');
+        Route::delete('/personalList/{id}', 'deleteList');
+        Route::patch('/updateList/{list:id}', 'updateList');
         Route::post('/globalSearch', 'globalSearch');
     });
 
     Route::controller(TaskController::class)->group(function() {
         Route::post('/createTask', 'createTask');
-        Route::post('/updateTask/{task:id}', 'updateTask');
-        Route::post('/deleteTask', 'deleteTask');
+        Route::patch('/updateTask/{task:id}', 'updateTask');
+        Route::delete('/deleteTask/{task:id}', 'deleteTask');
     });
 
     Route::controller(TagController::class)->group(function() {
@@ -49,8 +50,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/tag', 'taggedTasks');
         Route::post('/addTagToTask', 'addTagToTask');
         Route::post('/createTag', 'createTag');
-        Route::post('/updateTag/{tag:id}', 'updateTag');
+        Route::patch('/updateTag/{tag:id}', 'updateTag');
         Route::post('/deleteTagTask', 'deleteTagTask');
-        Route::post('/deleteTag/{tag:id}', 'deleteTag');
+        Route::delete('/deleteTag/{tag:id}', 'deleteTag');
+    });
+
+    Route::controller(MembershipInvitationsController::class)->group(function() {
+        Route::post('/createMembershipInvitation', 'createMembershipInvitation');
     });
 });

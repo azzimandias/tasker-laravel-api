@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TaskResource;
 use App\Models\Tag;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Task;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -20,57 +22,62 @@ class TaskController extends Controller
         return response()->json($response);
     }
 
-    public function updateTask(Task $task): string
+    public function updateTask(Request $request, Task $task): JsonResponse
     {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $updTask = $body->task;
-
-        switch ($updTask->name) {
+        $updField = $request->input('field');
+        if (!$updField || !isset($updField['key'])) {
+            return response()->json(['error' => 'Invalid task data'], 400);
+        }
+        switch ($updField['key']) {
             case 'name':
-                $task->name = $updTask->value;
+                $task->name = $updField['value'];
                 break;
             case 'description':
-                $task->description = $updTask->value;
+                $task->description = $updField['value'];
                 break;
             case 'deadline':
-                $task->deadline = $updTask->value;
+                $timestampSeconds = (int) ($updField['value']);
+                $task->deadline = $updField['value'] ?
+                    Carbon::createFromTimestamp($timestampSeconds)->format('Y-m-d H:i:s') :
+                    null;
                 break;
             case 'is_flagged':
-                $task->is_flagged = $updTask->value ? 1 : 0;
+                $task->is_flagged = (bool) $updField['value'];
                 break;
             case 'is_done':
-                $task->is_done = $updTask->value ? 1 : 0;
+                $task->is_done = (bool) $updField['value'];
                 break;
+            default:
+                return response()->json(['error' => 'Unknown field'], 400);
         }
-
         $task->save();
-        $this->sendTaskUpdateToSocket($task, $body->uuid);
-        $fullTask = $this->fullTask($task);
-        return json_encode($fullTask);
+        return response()->json([
+            'message' => 'Tag updated successfully',
+            'task' => new TaskResource($task->fresh())
+        ]);
     }
 
-    public function createTask(): string
+    public function createTask(Request $request): JsonResponse
     {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $new_task = $body->task;
-        $task = new Task;
-        $task->name = $new_task->name;
-        $task->id_list = $new_task->id_list;
-        $task->save();
-        $this->sendTaskCreateToSocket($task, $body->uuid);
-        $newTask = $this->fullTask($task);
-        return json_encode($newTask);
+        $newTask = $request->input('task', null);
+        $task = Task::create([
+            'name' => $newTask['name'],
+            'id_list' => $newTask['id_list'],
+            'id_user' => Auth::id(),
+        ]);
+        $this->sendTaskCreateToSocket($task, $request->query('uuid', null));
+        return response()->json(new TaskResource($task));
     }
 
-    public function deleteTask(): void
+    public function deleteTask(Request $request, int $id): JsonResponse
     {
-        $body = file_get_contents('php://input');
-        $body = json_decode($body);
-        $task = Task::find($body->id);
-        $this->sendTaskDeleteToSocket($task, $body->uuid);
+        $task = Task::find($id);
+        if (!$id) {
+            return response()->json(['message' => 'Task not found'], 404);
+        }
+        //$this->sendTaskDeleteToSocket($task, $body->uuid);
         $task->delete();
+        return response()->json(['message' => 'Task deleted successfully']);
     }
 
     /**
@@ -139,14 +146,14 @@ class TaskController extends Controller
         }]);
 
         // Получаем possibleTags (теги, которые можно добавить)
-        $usedTagIds = $task->tags->pluck('id')->toArray();
+        /*$usedTagIds = $task->tags->pluck('id')->toArray();
         $user = Auth::user();
         $possibleTags = Tag::whereNull('deleted_at')
             ->whereHas('users', function($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
             ->whereNotIn('id', $usedTagIds)
-            ->get();
+            ->get();*/
 
         // Формируем полные данные задачи
         return [
@@ -158,8 +165,8 @@ class TaskController extends Controller
             'description' => $task->description,
             'deadline' => $task->deadline,
             'tags' => $task->tags,
-            'possibleTags' => $possibleTags,
-            'user' => $user->id
+            'possibleTags' => [],
+            'user' => Auth::id()
         ];
     }
 }
