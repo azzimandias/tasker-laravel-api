@@ -25,7 +25,7 @@ class Task extends Model
 
     public function assignedTo(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'id_user'); // или другой ключ
+        return $this->belongsTo(User::class, 'id_user');
     }
 
     public function personalList(): BelongsTo
@@ -40,18 +40,4 @@ class Task extends Model
             ->whereNull('tag_task.deleted_at')
             ->whereNull('tags.deleted_at');
     }
-
-    /*public function possibleTags()
-    {
-        $taskId = $this->id ?: 0;
-
-        return $this->belongsToMany(Tag::class, 'tag_task', 'task_id', 'tag_id')
-            ->whereNotIn('tags.id', function($query) use ($taskId) {
-                $query->select('tag_id')
-                    ->from('tag_task')
-                    ->where('task_id', $taskId);
-            })
-            ->whereNull('tag_task.deleted_at')
-            ->whereNull('tags.deleted_at');
-    }*/
 }

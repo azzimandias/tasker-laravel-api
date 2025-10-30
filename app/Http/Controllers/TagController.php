@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PersonalListResource;
 use App\Http\Resources\TagResource;
 use App\Models\PersonalList;
 use App\Models\Tag;
@@ -19,11 +20,11 @@ use Illuminate\Support\Facades\Log;
 
 class TagController extends Controller
 {
-    public function tags(User $user) : JsonResponse
+    public function tags() : JsonResponse
     {
         $user = Auth::user();
         $tags = $user->tags;
-        $this->sendPersonalTagsToSocket($tags, $_GET['uuid']);
+        //$this->sendPersonalTagsToSocket($tags, $_GET['uuid']);
         return response()->json(TagResource::collection($tags));
     }
 
@@ -42,22 +43,12 @@ class TagController extends Controller
 
     public function taggedTasks(Tag $tag = null): string
     {
-        $user = Auth::user();
         if (!$tag) {
             $tagData = ['id' => 0, 'name' => 'Все теги'];
             $lists = PersonalList::with(['tasks.tags'])
-                ->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+                ->whereHas('users', fn($q) => $q->where('users.id', Auth::id()))
                 ->whereNull('deleted_at')
-                ->get()
-                ->map(function($list) {
-                    $list->tasks->map(function($task) {
-                        $task->possibleTags = Tag::whereNotIn('id', $task->tags->pluck('id'))
-                            ->whereNull('deleted_at')
-                            ->get();
-                        return $task;
-                    });
-                    return $list;
-                });
+                ->get();
         } else {
             $tagData = $tag->only(['id', 'name']);
             $tagId = $tag->id;
@@ -65,22 +56,13 @@ class TagController extends Controller
                 $query->whereHas('tags', function($q) use ($tagId) {
                         $q->where('tags.id', $tagId);
                     })->with(['tags']);
-            }])->whereHas('users', fn($q) => $q->where('users.id', $user->id))
+            }])->whereHas('users', fn($q) => $q->where('users.id', Auth::id()))
                 ->whereNull('deleted_at')
-                ->get()
-                ->map(function($list) {
-                    $list->tasks->map(function($task) {
-                        $task->possibleTags = Tag::whereNotIn('id', $task->tags->pluck('id'))
-                            ->whereNull('deleted_at')
-                            ->get();
-                        return $task;
-                    });
-                    return $list;
-                });
+                ->get();
         }
         return json_encode([
             'tag' => $tagData,
-            'tasksByList' => $lists,
+            'tasksByList' => PersonalListResource::collection($lists),
         ]);
     }
 

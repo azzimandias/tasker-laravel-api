@@ -18,7 +18,7 @@ Route::prefix('auth')->group(function() {
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/user', function (Request $request) {
+    Route::post('/user', function (Request $request) {
         return $request->user();
     });
 
@@ -30,8 +30,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(PersonalListController::class)->group(function() {
         Route::get('/lists', 'lists');
         Route::get('/sortLists', 'sortLists');
-        Route::get('/list/{personalList:id}', 'personalListTasksById');
-        Route::get('/listName', 'personalListTasksByName');
+        Route::post('/list/{personalList:id}', 'personalListTasksById');
+        Route::post('/listName', 'personalListTasksByName');
         Route::post('/createList', 'createList');
         Route::delete('/personalList/{id}', 'deleteList');
         Route::patch('/updateList/{list:id}', 'updateList');
@@ -45,9 +45,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::controller(TagController::class)->group(function() {
-        Route::get('/tags/{user:id}', 'tags');
-        Route::get('/tag/{tag:id}', 'taggedTasks');
-        Route::get('/tag', 'taggedTasks');
+        Route::get('/tags', 'tags');
+        Route::post('/tag/{tag:id}', 'taggedTasks');
+        Route::post('/tag', 'taggedTasks');
         Route::post('/addTagToTask', 'addTagToTask');
         Route::post('/createTag', 'createTag');
         Route::patch('/updateTag/{tag:id}', 'updateTag');

@@ -28,7 +28,7 @@ class PersonalListController extends Controller
         $lists = PersonalList::whereHas('users', fn($q) => $q->where('users.id', $userId))
             ->whereNull('deleted_at')
             ->get();
-        $this->sendPersonalCountOfActiveTasksToSocket($lists, $_GET['uuid']);
+        //$this->sendPersonalCountOfActiveTasksToSocket($lists, $_GET['uuid']);
         return response()->json($lists);
     }
     private function updatePersonalCountOfActiveTasks() : void
@@ -68,7 +68,7 @@ class PersonalListController extends Controller
     public function sortLists() : JsonResponse
     {
         $result = $this->updateSortCountOfActiveTasks();
-        $this->sendSortCountOfActiveTasksToSocket($result, $_GET['uuid']);
+        //$this->sendSortCountOfActiveTasksToSocket($result, $_GET['uuid']);
         return response()->json($result);
     }
     private function updateSortCountOfActiveTasks() : array
@@ -132,28 +132,6 @@ class PersonalListController extends Controller
         return response()->json($result);
     }
 
-    private function sortList(int $listId, ?string $case = null): object
-    {
-        $userId = Auth::id();
-        $tasksQuery = Task::with([
-            'personalList:id,name,color',
-            'tags'
-        ])->whereNull('tasks.deleted_at')
-          ->whereHas('personalList', function ($query) use ($userId, $listId) {
-            $query->whereNull('deleted_at')
-                ->where('id', $listId)
-                ->whereHas('users', function ($q) use ($userId) {
-                    $q->where('users.id', $userId);
-            });
-        });
-        match ($case) {
-            'today' => $tasksQuery->whereDate('deadline', now()->toDateString()),
-            'with_flag' => $tasksQuery->where('is_flagged', true),
-            'done' => $tasksQuery->where('is_done', true),
-            default => null,
-        };
-        return $tasksQuery->get()->map(fn($task) => (new TaskController)->fullTask($task));
-    }
     public function personalListTasksByName(Request $request): JsonResponse
     {
         $name = $request->query('name', null);
@@ -166,26 +144,29 @@ class PersonalListController extends Controller
             'done'      => ['id' => 3, 'name' => 'Завершено'],
             'all'       => ['id' => 4, 'name' => 'Все'],
         ];
-        $result = [
-            'sortList' => $sortMap[$name] ?? ['id' => 0, 'name' => 'Неизвестно'],
-            'tasksByList' => [],
-        ];
-        $personalLists = PersonalList::whereNull('deleted_at')->get();
-        foreach ($personalLists as $pl) {
-            $tasks = match ($name) {
-                'today'     => $this->sortList($pl->id, 'today'),
-                'with_flag' => $this->sortList($pl->id, 'with_flag'),
-                'done'      => $this->sortList($pl->id, 'done'),
-                default     => $this->sortList($pl->id),
-            };
-            if ($tasks && $tasks->count() > 0) {
-                $result['tasksByList'][] = [
-                    'personal_list' => $pl,
-                    'tasks' => $tasks,
-                ];
+        $lists = PersonalList::with(['tasks' => function ($query) use ($name) {
+            switch ($name) {
+                case 'today':
+                    $query->whereDate('deadline', now()->toDateString());
+                    break;
+                case 'with_flag':
+                    $query->where('is_flagged', true);
+                    break;
+                case 'done':
+                    $query->where('is_done', true);
+                    break;
+                default:
+                    break;
             }
-        }
-        return response()->json($result);
+            $query->with('tags');
+        }])->whereHas('users', fn($q) => $q->where('users.id', Auth::id()))
+            ->whereNull('deleted_at')
+            ->get();
+        $filtered = $lists->filter(fn($list) => $list->tasks->isNotEmpty())->values();
+        return response()->json([
+            'sortList' => $sortMap[$name] ?? ['id' => 0, 'name' => 'Неизвестно'],
+            'tasksByList' => PersonalListResource::collection($filtered),
+        ]);
     }
 
     public function createList(Request $request) : JsonResponse

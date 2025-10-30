@@ -25,6 +25,7 @@ class TaskResource extends JsonResource
 
             // Отношения
             'tags' => TagResource::collection($this->whenLoaded('tags')),
+            'possibleTags' => [],
             'list' => new PersonalListResource($this->whenLoaded('personalList')),
             'user' => new UserResource($this->whenLoaded('assignedTo')),
 

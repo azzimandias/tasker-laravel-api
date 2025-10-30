@@ -21,7 +21,8 @@ class PersonalListResource extends JsonResource
             'color' => $this->color,
 
             // Отношения (только если они загружены)
-            'owner' => new UserResource($this->whenLoaded('user')),
+            'owner' => new UserResource($this->whenLoaded('owner')),
+            'tasks' => TaskResource::collection($this->whenLoaded('tasks')),
 
             // Timestamps
             'created_at' => $this->created_at?->timestamp,
