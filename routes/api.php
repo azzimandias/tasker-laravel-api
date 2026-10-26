@@ -24,7 +24,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::controller(UserController::class)->group(function() {
         Route::post('/updateUserInfo', 'updateUserInfo');
-        Route::post('/findUsers', 'findUsers');
     });
 
     Route::controller(PersonalListController::class)->group(function() {
@@ -56,6 +55,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::controller(MembershipInvitationsController::class)->group(function() {
+        Route::post('/findUsers', 'findUsers');
         Route::post('/createMembershipInvitation', 'createMembershipInvitation');
     });
 });
